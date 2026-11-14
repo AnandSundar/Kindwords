@@ -18,3 +18,4 @@ bash.exe.stackdump
 /playwright-report/
 /public/embed.js
 /.playwright-mcp/
+/dist-cli/

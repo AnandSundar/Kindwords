@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, types, unit tests, widget size
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run widget:size
+
+  integration-sqlite:
+    name: Integration (SQLite, local disk)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run test:integration
+
+  integration-postgres-s3:
+    name: Integration (Postgres, S3)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: kindwords
+          POSTGRES_PASSWORD: kindwords
+          POSTGRES_DB: kindwords_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U kindwords"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://kindwords:kindwords@127.0.0.1:5432/kindwords_test
+      TEST_S3_ENDPOINT: http://127.0.0.1:8333
+      TEST_S3_BUCKET: kindwords-test
+      TEST_S3_ACCESS_KEY_ID: ci
+      TEST_S3_SECRET_ACCESS_KEY: ci
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      # An S3-compatible store (SeaweedFS); service containers cannot take a command, so start it here.
+      - name: Start S3-compatible storage
+        run: |
+          docker run -d --name s3 -p 8333:8333 chrislusf/seaweedfs:3.97 server -s3 -dir=/data
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://127.0.0.1:8333 && break; sleep 2; done
+          curl -sf -X PUT http://127.0.0.1:8333/kindwords-test
+      - run: npm ci
+      - run: npm run test:integration
+
+  e2e:
+    name: End to end (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  docker:
+    name: Docker image smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - run: node scripts/docker-smoke.mjs

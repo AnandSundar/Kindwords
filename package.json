@@ -12,10 +12,13 @@
     "widget:build": "node widget/build.mjs",
     "widget:size": "node widget/build.mjs && node scripts/check-widget-size.mjs",
     "start": "node server/start.mjs",
+    "start:standalone": "node scripts/standalone-assets.mjs && node cli.build.mjs && node dist-cli/migrate.mjs && node server/start.mjs",
+    "cli:build": "node cli.build.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
+    "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate --config drizzle.sqlite.config.ts && drizzle-kit generate --config drizzle.pg.config.ts",
     "db:migrate": "tsx src/cli/migrate.ts",
     "reset-password": "tsx src/cli/reset-password.ts"
@@ -31,6 +34,7 @@
     "sharp": "0.35.5"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@types/node": "24.19.2",
     "@types/pg": "8.23.1",
     "@types/react": "19.3.0",

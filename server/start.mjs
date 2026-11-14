@@ -11,6 +11,12 @@ const root = path.join(import.meta.dirname, "..");
 const dir = existsSync(path.join(root, "server.js")) ? root : path.join(root, ".next", "standalone");
 
 process.env.NODE_ENV = "production";
+// We chdir below, so pin relative data paths to where the server was started (as `migrate` sees them).
+const dbUrl = process.env.DATABASE_URL;
+if (dbUrl?.startsWith("file:") && !path.isAbsolute(dbUrl.slice(5))) {
+  process.env.DATABASE_URL = `file:${path.resolve(dbUrl.slice(5)).replaceAll("\\", "/")}`;
+}
+if (process.env.UPLOADS_DIR) process.env.UPLOADS_DIR = path.resolve(process.env.UPLOADS_DIR);
 process.chdir(dir);
 // The same config the generated server.js inlines; Next reads it from this variable instead of next.config.
 const { config } = JSON.parse(readFileSync(path.join(dir, ".next", "required-server-files.json"), "utf8"));
@@ -26,9 +32,17 @@ const app = next({ dir, dev: false, hostname, port, conf: config });
 await app.prepare();
 const handle = app.getRequestHandler();
 
-http
+const server = http
   .createServer((req, res) => {
     setClientIpHeader(req.headers, req.socket.remoteAddress, behindProxy ? Number(process.env.TRUSTED_PROXY_COUNT) : 0);
     handle(req, res);
   })
   .listen(port, hostname, () => console.log(`Kindwords listening on http://${hostname}:${port}`));
+
+// `docker stop` sends SIGTERM to PID 1: finish in-flight requests, then exit (forced after 10 s).
+for (const signal of ["SIGTERM", "SIGINT"]) {
+  process.once(signal, () => {
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 10_000).unref();
+  });
+}
