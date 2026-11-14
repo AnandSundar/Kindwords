@@ -19,6 +19,18 @@ export async function requireAdmin(): Promise<Session> {
 }
 
 /**
+ * KTD6, KTD13: a mutating route handler accepts only an Origin of PUBLIC_URL or, when that is unset, one
+ * whose host is the request's (X-Forwarded-Host or Host, as Next's server-action check uses). Next builds
+ * request.url from the bind address (0.0.0.0 in Docker), so it cannot stand in for the browser's origin.
+ */
+export function sameOrigin(request: Request, publicUrl: string | undefined): boolean {
+  const origin = request.headers.get("origin");
+  if (publicUrl) return origin === publicUrl;
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? new URL(request.url).host;
+  return URL.parse(origin ?? "")?.host === host;
+}
+
+/**
  * KTD6: first line of every mutating admin route handler. Route handlers get no built-in Origin check,
  * so a foreign Origin is refused with 403; a missing or expired session gets 401 so the admin UI can
  * keep the form and offer re-login.
@@ -28,7 +40,7 @@ export async function requireAdminRequest(
   db: Db = getDb(),
   publicUrl: string | undefined = getConfig().publicUrl,
 ): Promise<Session | Response> {
-  if (request.headers.get("origin") !== (publicUrl ?? new URL(request.url).origin)) {
+  if (!sameOrigin(request, publicUrl)) {
     return Response.json({ error: "Cross-origin request refused." }, { status: 403 });
   }
   const token = request.headers

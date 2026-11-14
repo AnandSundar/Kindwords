@@ -14,8 +14,9 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       // KTD12: only the wall page may be framed by other sites.
+      // /media/* is excluded: its route sets the KTD8 headers itself (one CSP, cross-origin loadable by the embed).
       {
-        source: "/:path((?!w/).*)",
+        source: "/:path((?!w/|media/).*)",
         headers: [
           ...common,
           { key: "X-Frame-Options", value: "DENY" },

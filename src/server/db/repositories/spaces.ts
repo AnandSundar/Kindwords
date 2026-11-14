@@ -37,7 +37,7 @@ export async function renameSpace(db: Db, id: string, name: string): Promise<boo
   return rows.length > 0;
 }
 
-/** Deletes the space; the database cascades to its testimonials. Avatar cleanup is added in U4. */
+/** Deletes the space; the database cascades to its testimonials. Avatar files: see deleteSpaceAndFiles. */
 export async function deleteSpace(db: Db, id: string): Promise<boolean> {
   const rows = await db.q.delete(db.t.spaces).where(eq(db.t.spaces.id, id)).returning({ id: db.t.spaces.id });
   return rows.length > 0;

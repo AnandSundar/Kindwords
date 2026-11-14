@@ -12,6 +12,8 @@ import { completeSetup, setSetupCode, SETUP_DONE } from "@/server/auth/setup-cod
 import { openDb, type OpenDb } from "@/server/db/client";
 import { runMigrations } from "@/server/db/migrate";
 import { createAdmin, getAdmin } from "@/server/db/repositories/admin";
+import { createSpace, deleteSpace } from "@/server/db/repositories/spaces";
+import { listTestimonials } from "@/server/db/repositories/testimonials";
 import { getSession, touchSession } from "@/server/db/repositories/sessions";
 import { removeTempDirs, targets } from "./db-helpers";
 
@@ -218,7 +220,7 @@ describe("built app via server/start.mjs", () => {
   const decode = (s: string) =>
     s.replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
 
-  /** Submits the page's form the way a browser without JavaScript does: hidden inputs plus fields. */
+  /** Submits the page's first form (on admin pages, the layout's logout) the way a browser without JavaScript does. */
   async function submit(
     app: App,
     page: string,
@@ -228,7 +230,7 @@ describe("built app via server/start.mjs", () => {
     const pageCookie = opts.pageCookie ?? opts.cookie;
     const html = await (await fetch(app.base + page, { headers: pageCookie ? { cookie: pageCookie } : {} })).text();
     const form = new FormData();
-    for (const [tag] of html.matchAll(/<input[^>]*>/g)) {
+    for (const [tag] of /<form[\s\S]*?<\/form>/.exec(html)![0].matchAll(/<input[^>]*>/g)) {
       if (!tag.includes('type="hidden"')) continue;
       const attr = (name: string) => decode(new RegExp(`\\s${name}="([^"]*)"`).exec(tag)?.[1] ?? "");
       form.append(attr("name"), attr("value"));
@@ -310,6 +312,41 @@ describe("built app via server/start.mjs", () => {
     const res = await submit(app, "/login", { password: "a good password" }, { xff: "198.51.100.99" });
     expect(res.status).toBe(200);
     expect(await res.text()).toContain(TOO_MANY_ATTEMPTS);
+  });
+
+  it("serves the public form and limits submissions per IP despite a forged X-Forwarded-For (KTD7)", async () => {
+    const space = await createSpace(app.db, "Acme");
+    const page = await get(app, `/c/${space.publicId}`);
+    expect(page.status).toBe(200);
+    const html = await page.text();
+    expect(html).toContain(`action="/api/submit/${space.publicId}"`);
+    expect(html).toMatch(/<legend[^>]*>Rating<\/legend>/);
+
+    const post = (xff: string) => {
+      const form = new FormData();
+      const fields = { name: "Ann", email: "ann@example.com", rating: "4", text: "Lovely product, truly.", consent: "on" };
+      for (const [name, value] of Object.entries(fields)) form.append(name, value);
+      return fetch(`${app.base}/api/submit/${space.publicId}`, {
+        method: "POST",
+        body: form,
+        redirect: "manual",
+        headers: { origin: app.base, "x-forwarded-for": xff },
+      });
+    };
+    for (let i = 0; i < 5; i++) {
+      const res = await post(`198.51.100.${i}`);
+      expect(res.status).toBe(303);
+      expect(res.headers.get("location")).toBe(`/c/${space.publicId}/thanks`);
+    }
+    const refused = await post("198.51.100.99");
+    expect(refused.status).toBe(429);
+    expect(await refused.text()).toMatch(/try again later/i);
+    expect(await listTestimonials(app.db, space.id, "pending")).toHaveLength(5);
+    expect(await (await get(app, `/c/${space.publicId}/thanks`)).text()).toContain("Thank you");
+
+    await deleteSpace(app.db, space.id);
+    expect((await get(app, `/c/${space.publicId}`)).status).toBe(404);
+    expect((await post("192.0.2.1")).status).toBe(404);
   });
 
   it("marks the cookie Secure under an https PUBLIC_URL", async () => {

@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
 import type { Db } from "../client";
 import { newId } from "../ids";
 
@@ -58,6 +58,13 @@ export async function updateTestimonial(db: Db, id: string, patch: TestimonialPa
     .where(eq(db.t.testimonials.id, id))
     .returning();
   return row;
+}
+
+/** Avatar storage keys of every testimonial in the space. */
+export async function listAvatarKeys(db: Db, spaceId: string): Promise<string[]> {
+  const t = db.t.testimonials;
+  const rows = await db.q.select({ key: t.avatarKey }).from(t).where(and(eq(t.spaceId, spaceId), isNotNull(t.avatarKey)));
+  return rows.map((row) => row.key!);
 }
 
 export async function deleteTestimonial(db: Db, id: string): Promise<boolean> {
