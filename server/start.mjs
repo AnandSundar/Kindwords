@@ -5,18 +5,14 @@ import http from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { setClientIpHeader } from "./client-ip.mjs";
+import { pinDataPaths } from "./data-paths.mjs";
 
 const root = path.join(import.meta.dirname, "..");
 // Beside the standalone server.js (Docker image), or the repo's .next/standalone.
 const dir = existsSync(path.join(root, "server.js")) ? root : path.join(root, ".next", "standalone");
 
 process.env.NODE_ENV = "production";
-// We chdir below, so pin relative data paths to where the server was started (as `migrate` sees them).
-const dbUrl = process.env.DATABASE_URL;
-if (dbUrl?.startsWith("file:") && !path.isAbsolute(dbUrl.slice(5))) {
-  process.env.DATABASE_URL = `file:${path.resolve(dbUrl.slice(5)).replaceAll("\\", "/")}`;
-}
-if (process.env.UPLOADS_DIR) process.env.UPLOADS_DIR = path.resolve(process.env.UPLOADS_DIR);
+pinDataPaths(process.env, process.cwd());
 process.chdir(dir);
 // The same config the generated server.js inlines; Next reads it from this variable instead of next.config.
 const { config } = JSON.parse(readFileSync(path.join(dir, ".next", "required-server-files.json"), "utf8"));

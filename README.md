@@ -29,7 +29,7 @@ Then:
 3. In the admin, create a space. Make one space per product.
 4. Share the space's collection link (`/c/...`) with customers.
 
-The host port is 3000 by default. Change it with `KINDWORDS_PORT` in `.env`. The example `.env` sets `PUBLIC_URL` to `http://localhost:3000`. Change it before you share any links (see [Configuration](#configuration)).
+The host port is 3000 by default. Change it with `KINDWORDS_PORT` in `.env`. Before you share any links, set `PUBLIC_URL` in `.env` to the address people use (see [Configuration](#configuration)).
 
 ## Embedding a wall
 
@@ -94,7 +94,7 @@ Copy `.env.example` to `.env` and edit it. Every setting is optional. The defaul
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PUBLIC_URL` | unset (uses the request address) | The address people use to reach Kindwords, with no trailing slash. `.env.example` sets `http://localhost:3000` |
+| `PUBLIC_URL` | unset (uses the request address) | The address people use to reach Kindwords, with no trailing slash. Set it in production |
 | `KINDWORDS_PORT` | `3000` | Host port for `docker compose up`. The container always listens on 3000 |
 | `TRUSTED_PROXY_COUNT` | `0` | Number of reverse proxies in front of Kindwords (see [Behind a reverse proxy](#behind-a-reverse-proxy)) |
 | `DATABASE_URL` | `file:/data/kindwords.db` | `file:` path for SQLite, or `postgres://` or `postgresql://` URL for Postgres |

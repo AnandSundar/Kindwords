@@ -38,6 +38,9 @@ export function openDb(url: string): OpenDb {
   }
   if (/^postgres(ql)?:\/\//.test(url)) {
     const pool = new Pool({ connectionString: url });
+    // An idle client dropped by the server emits on the pool; unhandled, that crashes the process.
+    // The pool replaces the client on the next query, so logging is enough.
+    pool.on("error", (err) => console.error("Postgres connection error:", err.message));
     return {
       dialect: "pg",
       q: drizzlePg(pool, { schema: pgSchema }) as unknown as Db["q"],

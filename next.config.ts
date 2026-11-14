@@ -20,6 +20,7 @@ const nextConfig: NextConfig = {
         headers: [
           ...common,
           { key: "X-Frame-Options", value: "DENY" },
+          // On /admin, /login and /setup, src/proxy.ts replaces this with a nonce policy that keeps frame-ancestors.
           { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
         ],
       },

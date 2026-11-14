@@ -366,7 +366,9 @@ describe("built app via server/start.mjs", () => {
 
     const admin = await get(app, "/admin", cookie);
     expect(admin.headers.get("x-frame-options")).toBe("DENY");
-    expect(admin.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
+    // The proxy's nonce policy replaces the global header on admin pages and keeps framing blocked.
+    expect(admin.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
+    expect(admin.headers.get("content-security-policy")).toMatch(/script-src 'self' 'nonce-[^']+' 'strict-dynamic'/);
 
     // AE8: moved back to pending, gone on the very next load.
     await changeStatus(app.db, t.id, "pending");
