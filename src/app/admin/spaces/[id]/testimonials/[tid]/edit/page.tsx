@@ -14,7 +14,7 @@ export default async function EditTestimonialPage({ params }: { params: Promise<
 
   return (
     <>
-      <p>
+      <p className="kw-back">
         <Link href={`/admin/spaces/${id}/inbox?status=${t.status}`}>← Inbox</Link>
       </p>
       <h1>Edit testimonial from {t.name}</h1>

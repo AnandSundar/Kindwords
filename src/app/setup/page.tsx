@@ -8,7 +8,7 @@ import { SetupForm } from "./setup-form";
 export default async function SetupPage() {
   if (await getAdmin(getDb())) notFound();
   return (
-    <main>
+    <main className="kw-ui kw-narrow">
       <h1>Set up Kindwords</h1>
       <p>Create the admin account. You need the setup code from the container logs.</p>
       <SetupForm minLength={MIN_PASSWORD_LENGTH} />

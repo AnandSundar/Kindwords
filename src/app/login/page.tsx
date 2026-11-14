@@ -9,7 +9,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (await getAdminSession()) redirect("/admin");
   const signedOut = (await searchParams)["signed-out"] !== undefined;
   return (
-    <main>
+    <main className="kw-ui kw-narrow">
       <h1>Sign in to Kindwords</h1>
       {signedOut && <p role="status">You have signed out.</p>}
       <LoginForm />

@@ -13,7 +13,7 @@ export default async function NewTestimonialPage({ params }: { params: Promise<{
 
   return (
     <>
-      <p>
+      <p className="kw-back">
         <Link href={`/admin/spaces/${space.id}/inbox`}>← Inbox</Link>
       </p>
       <h1>Add a testimonial to {space.name}</h1>

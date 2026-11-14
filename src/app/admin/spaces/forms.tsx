@@ -15,6 +15,7 @@ function SpaceForm(props: {
   defaultValue?: string;
   submit: string;
   pendingText: string;
+  danger?: boolean;
 }) {
   const [state, action, pending] = useActionState(props.action, {});
   const id = `${props.field}-${props.spaceId ?? "new"}`;
@@ -35,7 +36,7 @@ function SpaceForm(props: {
           aria-invalid={state.error ? true : undefined}
           aria-describedby={describedBy || undefined}
         />{" "}
-        <button type="submit" disabled={pending}>
+        <button type="submit" disabled={pending} className={props.danger ? "kw-danger" : undefined}>
           {pending ? props.pendingText : props.submit}
         </button>
         {props.hint && (
@@ -91,6 +92,7 @@ export function DeleteSpaceForm({ spaceId, name }: { spaceId: string; name: stri
       label={`Type “${name}” to confirm`}
       hint="This permanently deletes the space, all its testimonials and their photos. Embeds that use it will show an empty wall."
       submit="Delete space"
+      danger
       pendingText="Deleting…"
     />
   );

@@ -6,7 +6,7 @@ import { logout } from "./actions";
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   await requireAdmin();
   return (
-    <>
+    <div className="kw-ui kw-admin">
       <header>
         <nav aria-label="Admin">
           <Link href="/admin">Kindwords admin</Link>{" "}
@@ -16,6 +16,6 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         </nav>
       </header>
       <main>{children}</main>
-    </>
+    </div>
   );
 }

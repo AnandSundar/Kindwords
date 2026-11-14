@@ -1,0 +1,504 @@
+/*
+ * The look of the collection form, sign-in, setup and admin pages. Everything is scoped to .kw-ui, so
+ * the wall page (/w) and the embed keep their own styles. Colours are the wall's (widget/src/styles.ts)
+ * so the admin, the form and the embed read as one product.
+ */
+.kw-ui {
+  --page: #f3f5f4;
+  --card: #fff;
+  --ink: #1c2422;
+  --muted: #5d6864;
+  --line: #dde3e0;
+  --field: #fff;
+  --accent: #2b6b60;
+  --accent-ink: #fff;
+  --danger: #a3372f;
+  --danger-soft: #fbeceb;
+  --ok-soft: #e6f2ee;
+  --shadow: 0 1px 2px rgb(28 36 34 / 0.06);
+  --radius: 12px;
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
+
+  min-height: 100dvh;
+  background: var(--page);
+  color: var(--ink);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+@media (prefers-color-scheme: dark) {
+  .kw-ui {
+    --page: #121716;
+    --card: #1a201f;
+    --ink: #e9eeec;
+    --muted: #a3ada9;
+    --line: #2e3735;
+    --field: #141918;
+    --accent: #7cc4b4;
+    --accent-ink: #0f1513;
+    --danger: #f08a80;
+    --danger-soft: #3a1f1d;
+    --ok-soft: #17302a;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+/* The root layout's <body> keeps its default margin; the pages fill the window instead. */
+body:has(> .kw-ui) {
+  margin: 0;
+  background: #f3f5f4;
+}
+@media (prefers-color-scheme: dark) {
+  body:has(> .kw-ui) {
+    background: #121716;
+  }
+}
+
+.kw-ui *,
+.kw-ui *::before,
+.kw-ui *::after {
+  box-sizing: border-box;
+}
+
+/* ---- page frames ---- */
+.kw-narrow {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 56px 20px 72px;
+}
+.kw-admin > header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--page) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.kw-admin > header nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 10px 20px;
+}
+.kw-admin > header nav > a {
+  color: var(--ink);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+.kw-admin > main {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 32px 20px 72px;
+}
+
+/* ---- type ---- */
+.kw-ui h1 {
+  margin: 0 0 8px;
+  font-size: clamp(26px, 4vw, 32px);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.kw-ui h1 + p {
+  margin-top: 0;
+  color: var(--muted);
+}
+.kw-ui h2 {
+  margin: 0 0 12px;
+  font-size: 19px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.kw-ui p {
+  margin: 0 0 16px;
+}
+.kw-ui small {
+  color: var(--muted);
+  font-size: 14px;
+}
+.kw-ui a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.kw-ui a:hover {
+  text-decoration-thickness: 2px;
+}
+.kw-ui .kw-back {
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+.kw-ui .kw-back a {
+  color: var(--muted);
+  text-decoration: none;
+}
+.kw-ui .kw-back a:hover {
+  color: var(--ink);
+}
+
+/* ---- surfaces ---- */
+.kw-narrow > form,
+.kw-ui section,
+.kw-ui article {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.kw-narrow > form {
+  margin: 28px 0 20px;
+  padding: 28px;
+}
+.kw-ui section {
+  margin: 20px 0;
+  padding: 24px;
+}
+.kw-ui section > :last-child,
+.kw-ui form > :last-child {
+  margin-bottom: 0;
+}
+
+/* ---- fields ---- */
+.kw-ui form p {
+  margin: 0 0 20px;
+}
+/* The forms use <br> to stack label, field and hint when unstyled; here the blocks do that. */
+.kw-ui form br,
+.kw-ui label + br {
+  display: none;
+}
+.kw-ui label {
+  font-weight: 600;
+  font-size: 15px;
+}
+.kw-ui label:has(+ br),
+.kw-ui label:has(+ input),
+.kw-ui label:has(+ textarea) {
+  display: block;
+  margin-bottom: 6px;
+}
+.kw-ui form small,
+.kw-ui form [id$="-error"] {
+  display: block;
+  margin-top: 6px;
+}
+.kw-ui input:not([type="radio"], [type="checkbox"], [type="file"], [type="hidden"]),
+.kw-ui select,
+.kw-ui textarea {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--ink);
+  font: inherit;
+  transition: border-color 150ms var(--ease), box-shadow 150ms var(--ease);
+}
+.kw-ui textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+.kw-ui input:hover,
+.kw-ui select:hover,
+.kw-ui textarea:hover {
+  border-color: color-mix(in srgb, var(--ink) 30%, var(--line));
+}
+.kw-ui input:focus-visible,
+.kw-ui select:focus-visible,
+.kw-ui textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.kw-ui input[type="file"] {
+  font: inherit;
+  font-size: 15px;
+  color: var(--muted);
+}
+.kw-ui input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.kw-ui input[type="radio"],
+.kw-ui input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+.kw-ui label:has(> input[type="radio"]),
+.kw-ui label:has(> input[type="checkbox"]) {
+  font-weight: 400;
+}
+.kw-ui fieldset {
+  margin: 0 0 20px;
+  padding: 0;
+  border: 0;
+}
+.kw-ui legend {
+  margin-bottom: 4px;
+  padding: 0;
+  font-weight: 600;
+  font-size: 15px;
+}
+.kw-ui fieldset > label {
+  margin-right: 4px;
+}
+.kw-ui textarea[readonly] {
+  font: 13.5px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  background: var(--page);
+}
+
+/* ---- validation and messages ---- */
+.kw-ui [aria-invalid="true"]:not(fieldset) {
+  border-color: var(--danger);
+}
+.kw-ui [id$="-error"],
+.kw-ui [id$="-error"] strong {
+  color: var(--danger);
+  font-size: 14px;
+  font-weight: 600;
+}
+.kw-ui p[role="alert"],
+.kw-ui p[role="status"]:not(:empty) {
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 15px;
+}
+.kw-ui p[role="alert"] {
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-weight: 600;
+}
+.kw-ui p[role="status"]:not(:empty) {
+  background: var(--ok-soft);
+}
+
+/* ---- buttons ---- */
+.kw-ui button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--page);
+  font: inherit;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 120ms var(--ease), background-color 150ms var(--ease), opacity 150ms var(--ease);
+}
+.kw-ui button:hover {
+  background: color-mix(in srgb, var(--ink) 86%, var(--page));
+}
+.kw-ui button:active {
+  transform: scale(0.97);
+}
+.kw-ui button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.kw-ui button:disabled,
+.kw-ui button[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: progress;
+}
+/* Secondary: header and per-testimonial actions. */
+.kw-admin > header button,
+.kw-ui .kw-actions button {
+  min-height: 36px;
+  padding: 0 12px;
+  border-color: var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font-size: 14px;
+}
+.kw-admin > header button:hover,
+.kw-ui .kw-actions button:hover {
+  background: var(--page);
+  border-color: color-mix(in srgb, var(--ink) 25%, var(--line));
+}
+.kw-ui .kw-actions button.kw-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.kw-ui .kw-actions button.kw-primary:hover {
+  background: color-mix(in srgb, var(--accent) 88%, var(--ink));
+}
+.kw-ui button.kw-danger {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--line));
+  background: transparent;
+  color: var(--danger);
+}
+.kw-ui button.kw-danger:hover {
+  background: var(--danger-soft);
+}
+@media (prefers-reduced-motion: reduce) {
+  .kw-ui * {
+    transition: none !important;
+  }
+}
+
+/* ---- admin: spaces list, space page ---- */
+.kw-ui .kw-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.kw-ui .kw-list li + li {
+  border-top: 1px solid var(--line);
+}
+.kw-ui .kw-list a {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.kw-ui .kw-list a::after {
+  content: "→";
+  margin-left: auto;
+  color: var(--muted);
+  transition: transform 150ms var(--ease);
+}
+.kw-ui .kw-list a:hover::after {
+  transform: translateX(3px);
+}
+.kw-ui .kw-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-weight: 600;
+}
+.kw-ui dl {
+  margin: 0 0 20px;
+}
+.kw-ui dt {
+  font-weight: 600;
+  font-size: 15px;
+}
+.kw-ui dd {
+  margin: 2px 0 14px;
+  overflow-wrap: anywhere;
+}
+.kw-ui label + textarea[readonly] {
+  margin-top: 6px;
+}
+
+/* ---- admin: inbox ---- */
+.kw-ui .kw-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 20px 0 24px;
+}
+.kw-ui .kw-filters a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.kw-ui .kw-filters a[aria-current="page"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--page);
+}
+.kw-ui .kw-filters .kw-add {
+  margin-left: auto;
+  border-color: transparent;
+  background: none;
+  color: var(--accent);
+}
+.kw-ui .kw-items {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.kw-ui article {
+  padding: 20px 22px;
+}
+/* Same marker as a featured card on the wall. */
+.kw-ui article[data-featured] {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  box-shadow: inset 3px 0 0 var(--accent), var(--shadow);
+}
+.kw-ui article h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-bottom: 4px;
+  font-size: 17px;
+}
+.kw-ui article h2 img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.kw-ui article h2 small {
+  font-size: 14px;
+  font-weight: 400;
+}
+.kw-ui .kw-meta {
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.kw-ui .kw-meta strong {
+  color: var(--ink);
+}
+.kw-ui .kw-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.kw-ui .kw-actions > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.kw-ui .kw-actions > form:last-child {
+  margin-left: auto;
+}
+
+@media (max-width: 600px) {
+  .kw-narrow {
+    padding-top: 32px;
+  }
+  .kw-narrow > form,
+  .kw-ui section {
+    padding: 20px;
+  }
+  .kw-ui .kw-filters .kw-add {
+    margin-left: 0;
+  }
+}

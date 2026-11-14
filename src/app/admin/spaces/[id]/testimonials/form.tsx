@@ -108,7 +108,9 @@ export function DeleteTestimonialButton({ id, name, filter }: { id: string; name
     >
       <input type="hidden" name="id" value={id} />
       {filter && <input type="hidden" name="filter" value={filter} />}
-      <button type="submit">Delete</button>
+      <button type="submit" className="kw-danger">
+        Delete
+      </button>
     </form>
   );
 }

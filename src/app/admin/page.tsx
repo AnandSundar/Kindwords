@@ -18,7 +18,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
       ) : (
         <section aria-labelledby="spaces-heading">
           <h2 id="spaces-heading">Spaces</h2>
-          <ul>
+          <ul className="kw-list">
             {spaces.map((space) => (
               <li key={space.id}>
                 <Link href={`/admin/spaces/${space.id}`}>{space.name}</Link>

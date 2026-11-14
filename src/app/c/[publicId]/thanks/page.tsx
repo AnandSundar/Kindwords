@@ -14,7 +14,7 @@ export default async function ThanksPage({ params }: { params: Promise<{ publicI
   const space = await getSpaceByPublicId(getDb(), (await params).publicId);
   if (!space) notFound();
   return (
-    <main>
+    <main className="kw-ui kw-narrow">
       <h1>Thank you!</h1>
       <p>Your testimonial for {space.name} has been received. It will appear once it has been reviewed.</p>
     </main>

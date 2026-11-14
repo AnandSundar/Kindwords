@@ -16,7 +16,7 @@ export default async function CollectPage({ params }: { params: Promise<{ public
   const space = await getSpaceByPublicId(getDb(), publicId);
   if (!space) notFound();
   return (
-    <main>
+    <main className="kw-ui kw-narrow">
       <h1>Share your experience with {space.name}</h1>
       <p>Your words help others decide. It takes about a minute.</p>
       <SubmitForm publicId={space.publicId} />

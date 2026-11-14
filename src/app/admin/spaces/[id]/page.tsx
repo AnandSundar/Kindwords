@@ -26,14 +26,14 @@ export default async function SpacePage({
 
   return (
     <>
-      <p>
+      <p className="kw-back">
         <Link href="/admin">← All spaces</Link>
       </p>
       <h1>{space.name}</h1>
       {renamed && <p role="status">The space was renamed.</p>}
 
-      <p>
-        <Link href={`/admin/spaces/${space.id}/inbox`}>Inbox ({pending} pending)</Link> ·{" "}
+      <p className="kw-links">
+        <Link href={`/admin/spaces/${space.id}/inbox`}>Inbox ({pending} pending)</Link>
         <Link href={`/admin/spaces/${space.id}/testimonials/new`}>Add a testimonial by hand</Link>
       </p>
 
