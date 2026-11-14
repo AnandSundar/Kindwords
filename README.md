@@ -211,7 +211,7 @@ Checks:
 | `npm test` | Unit tests | Nothing |
 | `npm run test:integration` | Repository, auth, public feed and storage tests | Nothing for SQLite and local disk. Optional: `TEST_DATABASE_URL` for Postgres, and `TEST_S3_ENDPOINT`, `TEST_S3_BUCKET`, `TEST_S3_ACCESS_KEY_ID`, `TEST_S3_SECRET_ACCESS_KEY`, `TEST_S3_REGION` for S3 |
 | `npm run widget:size` | Builds the embed and fails above 15 KB gzipped | Nothing |
-| `npm run test:e2e` | Playwright tests in Chromium against a production build | Run `npx playwright install chromium` first |
+| `npm run test:e2e` | Playwright tests in Chromium, Firefox and WebKit against a production build | Run `npx playwright install chromium firefox webkit` first |
 | `node scripts/docker-smoke.mjs` | Full Docker check: setup, submission, restart, password reset | Docker. Uses the Compose project `kindwords-smoke` and removes its volumes when done |
 
 ## Roadmap

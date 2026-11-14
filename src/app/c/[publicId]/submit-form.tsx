@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { choiceInput, choiceLabel } from "@/app/choice-style";
 import type { SubmitError } from "@/server/testimonials/submit";
 import type { FieldErrors } from "@/server/testimonials/validate";
 
@@ -92,8 +93,8 @@ export function SubmitForm({ publicId }: { publicId: string }) {
       <fieldset role="radiogroup" aria-labelledby="rating-legend" {...aria("rating")}>
         <legend id="rating-legend">Rating</legend>
         {[1, 2, 3, 4, 5].map((n) => (
-          <label key={n}>
-            <input type="radio" name="rating" value={n} required /> {n} {n === 1 ? "star" : "stars"}{" "}
+          <label key={n} style={choiceLabel}>
+            <input type="radio" name="rating" value={n} required style={choiceInput} /> {n} {n === 1 ? "star" : "stars"}
           </label>
         ))}
         {error("rating")}
@@ -134,8 +135,8 @@ export function SubmitForm({ publicId }: { publicId: string }) {
         <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
       </div>
       <p>
-        <label>
-          <input name="consent" type="checkbox" required {...aria("consent")} /> I agree that my name, role, photo,
+        <label style={choiceLabel}>
+          <input name="consent" type="checkbox" required style={choiceInput} {...aria("consent")} /> I agree that my name, role, photo,
           rating and testimonial may be shown publicly.
         </label>
         {error("consent")}

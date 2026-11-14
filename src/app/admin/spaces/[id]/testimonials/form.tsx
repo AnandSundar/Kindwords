@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, type ReactNode } from "react";
+import { choiceInput, choiceLabel } from "@/app/choice-style";
 import type { Testimonial } from "@/server/db/repositories/testimonials";
 import { deleteTestimonialAction, saveTestimonialAction } from "./actions";
 
@@ -74,15 +75,15 @@ export function TestimonialForm(props: Props) {
         <p>
           {/* eslint-disable-next-line @next/next/no-img-element -- fixed 256px webp from /media */}
           <img src={`/media/${t.avatarKey}`} alt="Current photo" width={64} height={64} />{" "}
-          <label>
-            <input type="checkbox" name="removeAvatar" defaultChecked={v?.removeAvatar} /> Remove photo
+          <label style={choiceLabel}>
+            <input type="checkbox" name="removeAvatar" style={choiceInput} defaultChecked={v?.removeAvatar} /> Remove photo
           </label>
         </p>
       )}
       {!t && (
         <p>
-          <label>
-            <input type="checkbox" name="publish" defaultChecked={v?.publish ?? true} /> Publish now (otherwise it waits in the inbox as pending)
+          <label style={choiceLabel}>
+            <input type="checkbox" name="publish" style={choiceInput} defaultChecked={v?.publish ?? true} /> Publish now (otherwise it waits in the inbox as pending)
           </label>
         </p>
       )}

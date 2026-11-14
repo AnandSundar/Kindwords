@@ -19,15 +19,29 @@ function setupCode(): string {
 test("submit, approve and feature a testimonial, then it shows in the embed (F2, AE2)", async ({ browser }) => {
   const dialogs: string[] = [];
   const watchDialogs = (page: Page) => page.on("dialog", (d) => (dialogs.push(d.message()), d.dismiss()));
-  const admin = await (await browser.newContext()).newPage();
+  const adminContext = await browser.newContext();
+  // CSP violations, collected the same way in every engine.
+  await adminContext.addInitScript(() => {
+    const seen: string[] = ((window as unknown as { __csp: string[] }).__csp = []);
+    document.addEventListener("securitypolicyviolation", (e) => seen.push(`${e.violatedDirective} ${e.blockedURI}`));
+  });
+  const admin = await adminContext.newPage();
   watchDialogs(admin);
 
-  // F1: first-run setup with the code from the server output.
-  await admin.goto("/setup");
-  await admin.getByLabel("Setup code").fill(setupCode());
-  await admin.getByLabel("Password", { exact: true }).fill(PASSWORD);
-  await admin.getByLabel("Confirm password").fill(PASSWORD);
-  await admin.getByRole("button", { name: "Create admin account" }).click();
+  // F1: first-run setup with the code from the server output. The browser projects share one server,
+  // so only the first one sets up; the others sign in (setup is a 404 once the admin exists).
+  const setupPage = await admin.goto("/setup");
+  if (setupPage!.status() === 404) {
+    await admin.goto("/login");
+    await admin.getByLabel("Password").fill(PASSWORD);
+    await admin.getByRole("button", { name: "Sign in" }).click();
+  } else {
+    expect(setupPage!.headers()["content-security-policy"]).toMatch(/script-src 'self' 'nonce-[^']+' 'strict-dynamic'/);
+    await admin.getByLabel("Setup code").fill(setupCode());
+    await admin.getByLabel("Password", { exact: true }).fill(PASSWORD);
+    await admin.getByLabel("Confirm password").fill(PASSWORD);
+    await admin.getByRole("button", { name: "Create admin account" }).click();
+  }
   await expect(admin).toHaveURL(/\/admin$/);
 
   // A space and its public collection link.
@@ -45,6 +59,11 @@ test("submit, approve and feature a testimonial, then it shows in the embed (F2,
   await customer.getByLabel("Your name").fill("Rosa Díaz");
   await customer.getByLabel("Email").fill(EMAIL);
   await customer.getByLabel("Role and company (optional)").fill("Founder, Pebble");
+  // What a screen reader announces: a named radio group, and choice rows at least 44px tall to click.
+  await expect(customer.getByRole("radiogroup", { name: "Rating" }).getByRole("radio")).toHaveCount(5);
+  for (const label of [customer.locator("label").filter({ has: customer.getByLabel("4 stars") }), customer.locator("label").filter({ hasText: "I agree that my name" })]) {
+    expect((await label.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  }
   await customer.getByLabel("4 stars").check();
   await customer.getByLabel("Your testimonial").fill(TEXT);
   const photo = await sharp({ create: { width: 120, height: 120, channels: 3, background: "#3a7d6b" } }).png().toBuffer();
@@ -61,6 +80,8 @@ test("submit, approve and feature a testimonial, then it shows in the embed (F2,
   await admin.goto(`${spacePath}/inbox?status=approved`);
   await admin.getByRole("article").filter({ hasText: "Rosa Díaz" }).getByRole("button", { name: "Feature" }).click();
   await expect(admin.getByRole("article").filter({ hasText: "Rosa Díaz" })).toContainText("Featured");
+  // The admin flow above ran under the nonce CSP; nothing Next.js needs was blocked.
+  expect(await admin.evaluate(() => (window as unknown as { __csp: string[] }).__csp)).toEqual([]);
 
   // The embed on a different origin: card inside the shadow root, text literal, no script ran.
   const host = await (await browser.newContext()).newPage();

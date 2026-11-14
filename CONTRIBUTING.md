@@ -29,7 +29,7 @@ npm run typecheck
 npm test
 npm run widget:size
 npm run test:integration
-npx playwright install chromium   # once
+npx playwright install chromium firefox webkit   # once
 npm run test:e2e
 node scripts/docker-smoke.mjs     # when you change Docker, the entrypoint or startup
 ```

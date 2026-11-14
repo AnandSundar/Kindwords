@@ -43,16 +43,33 @@ async function mounted(attrs: Record<string, string> = {}, opts: Parameters<type
 }
 
 afterEach(() => {
+  vi.restoreAllMocks();
   document.body.replaceChildren();
   document.head.replaceChildren();
 });
 
 describe("embed widget (U9)", () => {
+  it("gives up on a feed request that hangs past 10 s and shows the empty state", async () => {
+    const timer = new AbortController();
+    const timeout = vi.spyOn(AbortSignal, "timeout").mockReturnValue(timer.signal);
+    const script = scriptTag();
+    const fetch = vi.fn(
+      (_url: URL, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => init?.signal?.addEventListener("abort", () => reject(init.signal!.reason))),
+    );
+    const mounting = mount(script, { fetch, matchMedia: () => ({ matches: false, addEventListener() {} }) } as unknown as Window);
+    timer.abort(new DOMException("timed out", "TimeoutError"));
+    await mounting;
+    expect(timeout).toHaveBeenCalledWith(10_000);
+    expect(script.nextElementSibling!.shadowRoot!.querySelector(".kw")!.textContent).toBe(EMPTY_TEXT);
+  });
+
   it("fetches the space's feed without credentials and renders a card per item in a shadow root", async () => {
     const { host, fetch, cards } = await mounted({}, { items: [item(), item({ name: "Bo" })] });
     expect(host.tagName).toBe("KINDWORDS-WALL");
     expect(String(fetch.mock.calls[0][0])).toBe("https://reviews.example.com/api/public/abc_123/testimonials");
-    expect(fetch.mock.calls[0][1]).toEqual({ credentials: "omit" });
+    expect(fetch.mock.calls[0][1]).toMatchObject({ credentials: "omit" });
+    expect(fetch.mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal);
     expect(cards).toHaveLength(2);
     expect(cards[0].querySelector(".kw-text")!.textContent).toBe("Kindwords made this so easy.");
     expect(cards[0].querySelector(".kw-stars")!.getAttribute("aria-label")).toBe("5 out of 5 stars");

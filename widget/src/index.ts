@@ -2,6 +2,7 @@ import { renderWall, type PublicItem } from "./render";
 import { WALL_CSS } from "./styles";
 
 const SPACE = /^[A-Za-z0-9_-]{1,64}$/;
+const FEED_TIMEOUT_MS = 10_000;
 
 /**
  * Mounts one wall after its script tag: a <kindwords-wall> host (a custom tag, so the host page's
@@ -38,7 +39,8 @@ export async function mount(script: HTMLScriptElement, win: Window = window): Pr
     if (SPACE.test(space)) {
       const url = new URL(`/api/public/${space}/testimonials`, script.src);
       if (featuredOnly) url.searchParams.set("featured", "1");
-      const res = await win.fetch(url, { credentials: "omit" });
+      // A hung server must not leave the wall blank forever: give up after 10 s and show the empty state.
+      const res = await win.fetch(url, { credentials: "omit", signal: globalThis.AbortSignal?.timeout?.(FEED_TIMEOUT_MS) });
       const body = res.ok ? await res.json() : undefined;
       // Drop non-object items: rendering runs outside the try, and a null item must not throw into the page.
       if (body?.version === 1 && Array.isArray(body.testimonials)) items = body.testimonials.filter((i: unknown) => typeof i === "object" && i !== null);
