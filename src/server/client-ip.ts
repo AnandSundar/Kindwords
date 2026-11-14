@@ -1,12 +1,8 @@
 /**
- * KTD7: the client IP from X-Forwarded-For, read from the right. Each trusted proxy appends the
- * address it received from, so the client is `trustedProxyCount` entries from the right. With no
- * trusted proxy, server/start.mjs drops any incoming header and Next fills it with the socket address.
+ * KTD7: the client IP that server/start.mjs records in a private header (it replaces any client-sent
+ * copy). Without it (`next dev`, or any other entry) every request shares the "unknown" throttle bucket
+ * rather than trusting a forgeable header.
  */
-export function clientIp(headers: Headers, trustedProxyCount: number): string {
-  const hops = (headers.get("x-forwarded-for") ?? "")
-    .split(",")
-    .map((hop) => hop.trim())
-    .filter(Boolean);
-  return hops[Math.max(0, hops.length - Math.max(trustedProxyCount, 1))] ?? "unknown";
+export function clientIp(headers: Headers): string {
+  return headers.get("x-kindwords-client-ip") ?? "unknown";
 }

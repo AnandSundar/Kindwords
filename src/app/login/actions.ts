@@ -11,7 +11,7 @@ export type LoginState = { error?: string };
 
 export async function login(_previous: LoginState, form: FormData): Promise<LoginState> {
   const config = getConfig();
-  const ip = clientIp(await headers(), config.trustedProxyCount);
+  const ip = clientIp(await headers());
   const result = await attemptLogin(getDb(), ip, String(form.get("password") ?? ""));
   if ("error" in result) return result;
   (await cookies()).set(SESSION_COOKIE, result.token, sessionCookieOptions(config.cookieSecure));

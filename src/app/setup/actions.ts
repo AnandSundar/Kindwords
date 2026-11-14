@@ -10,7 +10,7 @@ import { getDb } from "@/server/db/client";
 
 export async function setup(_previous: SetupState, form: FormData): Promise<SetupState> {
   const config = getConfig();
-  const result = await completeSetup(getDb(), clientIp(await headers(), config.trustedProxyCount), {
+  const result = await completeSetup(getDb(), clientIp(await headers()), {
     code: String(form.get("code") ?? ""),
     password: String(form.get("password") ?? ""),
     confirm: String(form.get("confirm") ?? ""),

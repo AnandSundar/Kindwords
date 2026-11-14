@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import http from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
+import { setClientIpHeader } from "./client-ip.mjs";
 
 const root = path.join(import.meta.dirname, "..");
 // Beside the standalone server.js (Docker image), or the repo's .next/standalone.
@@ -27,9 +28,7 @@ const handle = app.getRequestHandler();
 
 http
   .createServer((req, res) => {
-    // Next sets X-Forwarded-For from the socket only when the header is absent, so without a trusted
-    // proxy any client-sent value is dropped and the client cannot forge its IP.
-    if (!behindProxy) delete req.headers["x-forwarded-for"];
+    setClientIpHeader(req.headers, req.socket.remoteAddress, behindProxy ? Number(process.env.TRUSTED_PROXY_COUNT) : 0);
     handle(req, res);
   })
   .listen(port, hostname, () => console.log(`Kindwords listening on http://${hostname}:${port}`));
