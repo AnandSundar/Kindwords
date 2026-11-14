@@ -1,5 +1,5 @@
 import { getDb } from "@/server/db/client";
-import { publicOrigin } from "@/server/origin";
+import { getConfig } from "@/server/config";
 import { publicWall } from "@/server/testimonials/public-view";
 
 /**
@@ -9,7 +9,7 @@ import { publicWall } from "@/server/testimonials/public-view";
 export async function GET(request: Request, { params }: { params: Promise<{ publicId: string }> }) {
   const { publicId } = await params;
   const featuredOnly = new URL(request.url).searchParams.get("featured") === "1";
-  const { testimonials } = await publicWall(getDb(), publicId, { featuredOnly, origin: publicOrigin(request.headers) });
+  const { testimonials } = await publicWall(getDb(), publicId, { featuredOnly, publicUrl: getConfig().publicUrl });
   return Response.json(
     { version: 1, testimonials },
     { headers: { "Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=30" } },

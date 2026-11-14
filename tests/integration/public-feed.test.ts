@@ -20,7 +20,7 @@ afterAll(() => {
   } catch {}
 });
 
-const origin = "https://r.example.com";
+const publicUrl = "https://r.example.com";
 
 describe.each(targets)("public wall on $name", (target) => {
   let db: OpenDb;
@@ -40,7 +40,7 @@ describe.each(targets)("public wall on $name", (target) => {
     await add({ name: "Pending" });
     await add({ name: "Rejected", status: "rejected" });
     await add({ name: "Approved", status: "approved", originalText: "secret original" });
-    const { spaceName, testimonials } = await publicWall(db, publicId, { origin });
+    const { spaceName, testimonials } = await publicWall(db, publicId, { publicUrl });
     expect(spaceName).toBe("Acme");
     expect(testimonials.map((t) => t.name)).toEqual(["Approved"]);
     expect(Object.keys(testimonials[0]).sort()).toEqual([...PUBLIC_KEYS].sort());
@@ -54,19 +54,19 @@ describe.each(targets)("public wall on $name", (target) => {
     await new Promise((r) => setTimeout(r, 5));
     await add({ name: "Newest", status: "approved" });
     await setFeatured(db, old.id, true);
-    expect((await publicWall(db, publicId, { origin })).testimonials.map((t) => t.name)).toEqual(["Old", "Newest", "New"]);
-    expect((await publicWall(db, publicId, { origin, featuredOnly: true })).testimonials.map((t) => t.name)).toEqual(["Old"]);
+    expect((await publicWall(db, publicId, { publicUrl })).testimonials.map((t) => t.name)).toEqual(["Old", "Newest", "New"]);
+    expect((await publicWall(db, publicId, { publicUrl, featuredOnly: true })).testimonials.map((t) => t.name)).toEqual(["Old"]);
   });
 
   it("drops a testimonial moved back to pending on the next read (AE8)", async () => {
     const t = await add({ status: "approved" });
-    expect((await publicWall(db, publicId, { origin })).testimonials).toHaveLength(1);
+    expect((await publicWall(db, publicId, { publicUrl })).testimonials).toHaveLength(1);
     await changeStatus(db, t.id, "pending");
-    expect((await publicWall(db, publicId, { origin })).testimonials).toEqual([]);
+    expect((await publicWall(db, publicId, { publicUrl })).testimonials).toEqual([]);
   });
 
   it("returns an empty wall for an unknown public ID (R26)", async () => {
-    expect(await publicWall(db, "no-such-space", { origin })).toEqual({ spaceName: undefined, testimonials: [] });
+    expect(await publicWall(db, "no-such-space", { publicUrl })).toEqual({ spaceName: undefined, testimonials: [] });
   });
 });
 

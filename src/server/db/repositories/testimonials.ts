@@ -41,7 +41,6 @@ export async function getTestimonial(db: Db, id: string): Promise<Testimonial | 
   return row;
 }
 
-/** Newest first, optionally filtered by status. */
 /** The columns a public surface may read (KTD9); email and original text are never selected. */
 export type PublicRow = Pick<Testimonial, "name" | "roleCompany" | "rating" | "text" | "avatarKey" | "featured" | "createdAt">;
 
@@ -68,6 +67,7 @@ export async function listPublicTestimonials(db: Db, spaceId: string, featuredOn
     .limit(PUBLIC_LIMIT);
 }
 
+/** Newest first, optionally filtered by status. */
 export async function listTestimonials(db: Db, spaceId: string, status?: TestimonialStatus): Promise<Testimonial[]> {
   const t = db.t.testimonials;
   return db.q
@@ -95,6 +95,16 @@ export async function setTestimonialFeatured(db: Db, id: string, featured: boole
     .where(featured ? and(eq(t.id, id), eq(t.status, "approved")) : eq(t.id, id))
     .returning();
   return row;
+}
+
+/**
+ * Status of the testimonial an avatar belongs to, or undefined for an unknown key.
+ * shortcut: avatar_key has no index, so this scans; add one if walls grow to tens of thousands of rows.
+ */
+export async function getAvatarStatus(db: Db, key: string): Promise<TestimonialStatus | undefined> {
+  const t = db.t.testimonials;
+  const [row] = await db.q.select({ status: t.status }).from(t).where(eq(t.avatarKey, key)).limit(1);
+  return row?.status;
 }
 
 /** Avatar storage keys of every testimonial in the space. */

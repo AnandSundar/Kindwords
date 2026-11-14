@@ -64,4 +64,12 @@ describe("validateSubmission (KTD7)", () => {
     const bad = validateSubmission({ ...valid, email: "nope", rating: "6", text: "short" }, "admin");
     expect("fieldErrors" in bad && Object.keys(bad.fieldErrors).sort()).toEqual(["email", "rating", "text"]);
   });
+
+  it("refuses bidi overrides, zero-width and separator characters in name, role and email, but keeps emoji joiners", () => {
+    expect(errorsFor({ name: "Ann \u202Eeil" })).toEqual(["name"]);
+    expect(errorsFor({ name: "A\u200Bnn" })).toEqual(["name"]);
+    expect(errorsFor({ roleCompany: "CTO\u2028Acme" })).toEqual(["roleCompany"]);
+    expect(errorsFor({ email: "ann\u200E@example.com" })).toEqual(["email"]);
+    expect(errorsFor({ name: "\u{1F469}\u200D\u{1F4BB} Ann" })).toEqual([]);
+  });
 });

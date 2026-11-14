@@ -40,12 +40,13 @@ export async function mount(script: HTMLScriptElement, win: Window = window): Pr
       if (featuredOnly) url.searchParams.set("featured", "1");
       const res = await win.fetch(url, { credentials: "omit" });
       const body = res.ok ? await res.json() : undefined;
-      if (body?.version === 1 && Array.isArray(body.testimonials)) items = body.testimonials;
+      // Drop non-object items: rendering runs outside the try, and a null item must not throw into the page.
+      if (body?.version === 1 && Array.isArray(body.testimonials)) items = body.testimonials.filter((i: unknown) => typeof i === "object" && i !== null);
     }
   } catch {
     // Offline, blocked or malformed: show the empty state instead.
   }
-  renderWall(doc, wall, featuredOnly ? items.filter((item) => item.featured === true) : items);
+  renderWall(doc, wall, featuredOnly ? items.filter((item) => item.featured === true) : items, script.src);
 }
 
 if (typeof document !== "undefined") {

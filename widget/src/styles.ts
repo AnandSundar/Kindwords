@@ -3,8 +3,8 @@
  * Sizes are px so the host page's root font size cannot distort the wall; a host may pass its own
  * font through the `--kindwords-font` custom property, which crosses the shadow boundary.
  */
-const LIGHT = "--card:#fff;--ink:#1c2422;--muted:#5d6864;--line:#dde3e0;--star:#a86f00;--page:#f3f5f4;--disc-l:38%;--disc-ink:#fff";
-const DARK = "--card:#1a201f;--ink:#e9eeec;--muted:#a3ada9;--line:#2e3735;--star:#f0b43a;--page:#121716;--disc-l:66%;--disc-ink:#121716";
+const LIGHT = "--card:#fff;--ink:#1c2422;--muted:#5d6864;--line:#dde3e0;--star:#a86f00;--star-off:#8a9490;--page:#f3f5f4;--disc-l:35%;--disc-ink:#fff";
+const DARK = "--card:#1a201f;--ink:#e9eeec;--muted:#a3ada9;--line:#2e3735;--star:#f0b43a;--star-off:#6b7672;--page:#121716;--disc-l:66%;--disc-ink:#121716";
 
 export const WALL_CSS = `
 :host{display:block}
@@ -16,7 +16,7 @@ export const WALL_CSS = `
 .kw-card{display:grid;gap:14px;break-inside:avoid;margin:0 0 16px;padding:20px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow-wrap:anywhere}
 .kw-card[data-featured]{border-color:hsl(var(--h) 42% 50% / .6);box-shadow:inset 3px 0 0 hsl(var(--h) 42% 50%)}
 .kw-stars{color:var(--star);font-size:15px;letter-spacing:2px;line-height:1}
-.kw-stars span{opacity:.28}
+.kw-stars span{color:var(--star-off)}
 .kw-text{white-space:pre-line;font-size:15px}
 .kw-text[data-clamp]{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:9;overflow:hidden}
 .kw-text[data-open]{display:block}

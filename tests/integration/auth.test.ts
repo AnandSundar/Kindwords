@@ -173,18 +173,20 @@ describe("reset-password CLI", () => {
   }, 30_000);
 });
 
-// The real production startup path: `next build`, then server/start.mjs on a random port.
+// The real production startup path: the `npm run build` steps, then server/start.mjs on a random port.
 describe("built app via server/start.mjs", () => {
   type App = { base: string; db: OpenDb; setupCode?: string; child: ChildProcess };
   const apps: App[] = [];
 
   beforeAll(() => {
-    const build = spawnSync(process.execPath, [path.join(root, "node_modules/next/dist/bin/next"), "build"], {
-      cwd: root,
-      env: { ...process.env, NODE_ENV: "production" },
-      encoding: "utf8",
-    });
-    if (build.status !== 0) throw new Error(`next build failed:\n${build.stdout}\n${build.stderr}`);
+    for (const [script, ...args] of [["widget/build.mjs"], ["node_modules/next/dist/bin/next", "build"], ["scripts/standalone-assets.mjs"]]) {
+      const build = spawnSync(process.execPath, [path.join(root, script), ...args], {
+        cwd: root,
+        env: { ...process.env, NODE_ENV: "production" },
+        encoding: "utf8",
+      });
+      if (build.status !== 0) throw new Error(`${script} failed:\n${build.stdout}\n${build.stderr}`);
+    }
   }, 600_000);
 
   afterAll(async () => {
@@ -354,6 +356,13 @@ describe("built app via server/start.mjs", () => {
     expect(html).not.toContain("<script>alert(1)");
     expect(html).not.toContain("ann@example.com");
     expect(html).toContain('data-theme="dark"');
+
+    // The standalone server must serve the embed script and the client chunks the wall page loads.
+    const embed = await get(app, "/embed.js");
+    expect(embed.status).toBe(200);
+    expect(embed.headers.get("content-type")).toMatch(/javascript/);
+    const chunk = /\/_next\/static\/[^"]+\.js/.exec(html)![0];
+    expect((await get(app, chunk)).status).toBe(200);
 
     const admin = await get(app, "/admin", cookie);
     expect(admin.headers.get("x-frame-options")).toBe("DENY");

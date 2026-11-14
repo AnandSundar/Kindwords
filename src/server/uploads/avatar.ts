@@ -4,6 +4,13 @@ const MAX_BYTES = 2 * 1024 * 1024;
 const MAX_PIXELS = 24_000_000;
 const FORMATS = new Set(["jpeg", "png", "webp"]);
 
+function isRaster(b: Buffer): boolean {
+  const jpeg = b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+  const png = b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  const webp = b.toString("latin1", 0, 4) === "RIFF" && b.toString("latin1", 8, 12) === "WEBP";
+  return jpeg || png || webp;
+}
+
 /** A rejection whose message is safe and meant to be shown to the uploader (R8). */
 export class AvatarError extends Error {}
 
@@ -15,6 +22,8 @@ export async function processAvatar(input: Buffer): Promise<Buffer> {
   if (input.length > MAX_BYTES) {
     throw new AvatarError("The image is larger than 2 MB. Please choose a smaller file.");
   }
+  // Magic bytes first, so nothing but JPEG, PNG or WebP ever reaches sharp's parsers (SVG, TIFF, ...).
+  if (!isRaster(input)) throw new AvatarError("This file is not an image we accept. Please upload a JPEG, PNG or WebP.");
   let meta: Metadata;
   try {
     // Header-only read; lifting sharp's default pixel cap here lets a bomb get the "too many megapixels" message below.

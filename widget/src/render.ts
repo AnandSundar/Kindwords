@@ -21,7 +21,19 @@ function el<K extends keyof HTMLElementTagNameMap>(doc: Document, tag: K, classN
   return node;
 }
 
-export function card(doc: Document, item: PublicItem): HTMLElement {
+/** An http(s) URL, resolved against `base`; anything else (javascript:, data:, junk) is dropped. */
+function safeUrl(value: unknown, base?: string): string | undefined {
+  if (typeof value !== "string" || !value) return undefined;
+  try {
+    const url = new URL(value, base);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** `base` is the embed script's URL: relative avatar paths from the feed resolve against it. */
+export function card(doc: Document, item: PublicItem, base?: string): HTMLElement {
   const name = String(item.name ?? "");
   const figure = el(doc, "figure", "kw-card");
   figure.style.setProperty("--h", String(hueFor(name)));
@@ -53,7 +65,7 @@ export function card(doc: Document, item: PublicItem): HTMLElement {
   }
 
   const who = el(doc, "figcaption", "kw-who");
-  const avatarUrl = typeof item.avatarUrl === "string" && /^https?:\/\//.test(item.avatarUrl) ? item.avatarUrl : undefined;
+  const avatarUrl = safeUrl(item.avatarUrl, base);
   if (avatarUrl) {
     const img = el(doc, "img", "kw-avatar");
     img.src = avatarUrl;
@@ -82,12 +94,12 @@ export function card(doc: Document, item: PublicItem): HTMLElement {
 }
 
 /** Replaces the wall's content with the cards, or the quiet empty state. */
-export function renderWall(doc: Document, wall: HTMLElement, items: PublicItem[]): void {
+export function renderWall(doc: Document, wall: HTMLElement, items: PublicItem[], base?: string): void {
   if (!items.length) {
     wall.replaceChildren(el(doc, "p", "kw-empty", EMPTY_TEXT));
     return;
   }
   const grid = el(doc, "div", "kw-grid");
-  for (const item of items) grid.append(card(doc, item));
+  for (const item of items) grid.append(card(doc, item, base));
   wall.replaceChildren(grid);
 }

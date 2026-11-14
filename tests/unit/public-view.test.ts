@@ -36,6 +36,10 @@ describe("public read model (KTD9)", () => {
     });
   });
 
+  it("gives a path, not a request-derived origin, when PUBLIC_URL is unset", () => {
+    expect(toPublic(full, undefined).avatarUrl).toBe("/media/abc");
+  });
+
   it("gives a null avatar URL when there is no avatar", () => {
     expect(toPublic({ ...full, avatarKey: null }, "https://r.example.com").avatarUrl).toBeNull();
   });

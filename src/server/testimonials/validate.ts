@@ -19,7 +19,9 @@ export type FieldErrors = Partial<Record<keyof SubmissionInput | "avatar", strin
 
 const chars = (s: string) => [...s].length;
 // Line breaks and tabs are allowed in the testimonial text only; every other control character is refused.
-const CONTROL = /\p{Cc}/u;
+// Names, roles and emails also refuse format characters (bidi overrides, zero-width, line/paragraph
+// separators) that can spoof what the admin sees; the zero-width joiner stays for emoji sequences.
+const CONTROL = /[\p{Cc}\p{Zl}\p{Zp}]|(?!\u200D)\p{Cf}/u;
 const TEXT_CONTROL = /[^\P{Cc}\t\n\r]/u;
 
 /**

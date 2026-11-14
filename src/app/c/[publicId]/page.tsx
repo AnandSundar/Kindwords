@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDb } from "@/server/db/client";
 import { getSpaceByPublicId } from "@/server/db/repositories/spaces";
 import { SubmitForm } from "./submit-form";
+
+type Props = { params: Promise<{ publicId: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const space = await getSpaceByPublicId(getDb(), (await params).publicId);
+  return { title: space ? `Share your experience with ${space.name}` : "Kindwords" };
+}
 
 export default async function CollectPage({ params }: { params: Promise<{ publicId: string }> }) {
   const { publicId } = await params;

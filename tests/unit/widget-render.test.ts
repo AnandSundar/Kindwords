@@ -68,8 +68,13 @@ describe("embed widget (U9)", () => {
 
   it("only uses http(s) avatar URLs", async () => {
     const { cards } = await mounted({}, {
-      items: [item({ avatarUrl: "https://reviews.example.com/media/k1" }), item({ avatarUrl: "javascript:alert(1)" })],
+      items: [
+        item({ avatarUrl: "https://reviews.example.com/media/k1" }),
+        item({ avatarUrl: "javascript:alert(1)" }),
+        item({ avatarUrl: "/media/k2" }),
+      ],
     });
+    expect(cards[2].querySelector("img")!.getAttribute("src")).toBe("https://reviews.example.com/media/k2");
     expect(cards[0].querySelector("img")!.getAttribute("src")).toBe("https://reviews.example.com/media/k1");
     expect(cards[1].querySelector("img")).toBeNull();
     expect(cards[1].querySelector(".kw-avatar")!.textContent).toBe("AL");
@@ -124,6 +129,27 @@ describe("embed widget (U9)", () => {
     const fetch = vi.fn(async () => new Response("<html>", { status: 200 }));
     await expect(mount(script, { fetch, matchMedia: () => ({ matches: false }) } as unknown as Window)).resolves.toBeUndefined();
     expect(script.nextElementSibling!.shadowRoot!.textContent).toContain(EMPTY_TEXT);
+
+    const nulls = await mounted({}, { items: [null, item()] as unknown as PublicItem[] });
+    expect(nulls.cards).toHaveLength(1);
+  });
+
+  it("auto-mounts each pasted embed.js tag once, skipping tags already mounted", async () => {
+    const fresh = scriptTag();
+    const done = scriptTag({ "data-kw-mounted": "" });
+    const fetch = vi
+      .spyOn(window, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify({ version: 1, testimonials: [item()] }), { status: 200 }));
+    try {
+      vi.resetModules();
+      await import("../../widget/src/index");
+      await vi.waitFor(() => expect(fresh.nextElementSibling!.shadowRoot!.querySelector(".kw-card")).not.toBeNull());
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(document.querySelectorAll("kindwords-wall")).toHaveLength(1);
+      expect(done.nextElementSibling).toBeNull();
+    } finally {
+      fetch.mockRestore();
+    }
   });
 
   it("clamps long testimonials behind a Read more toggle and leaves short ones alone", async () => {

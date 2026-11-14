@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import type { CSSProperties } from "react";
 import { getDb } from "@/server/db/client";
-import { publicOrigin } from "@/server/origin";
+import { getConfig } from "@/server/config";
 import { publicWall, type PublicTestimonial } from "@/server/testimonials/public-view";
 import { EMPTY_TEXT } from "../../../../widget/src/render";
 import { hueFor, initials, starCount, WALL_CSS } from "../../../../widget/src/styles";
@@ -22,11 +21,11 @@ export default async function WallPage({ params, searchParams }: Props) {
   const theme = query.theme === "light" || query.theme === "dark" ? query.theme : "auto";
   const { spaceName, testimonials } = await publicWall(getDb(), publicId, {
     featuredOnly: query.featured === "1",
-    origin: publicOrigin(await headers()),
+    publicUrl: getConfig().publicUrl,
   });
 
   return (
-    <div className="kw kw-page" data-theme={theme}>
+    <main className="kw kw-page" data-theme={theme}>
       <style>{WALL_CSS + PAGE_CSS}</style>
       <h1 className="kw-sr">{spaceName ? `What people say about ${spaceName}` : "Testimonials"}</h1>
       {testimonials.length === 0 ? (
@@ -38,7 +37,7 @@ export default async function WallPage({ params, searchParams }: Props) {
           ))}
         </div>
       )}
-    </div>
+    </main>
   );
 }
 

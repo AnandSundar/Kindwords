@@ -1,26 +1,50 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import type { SubmitError } from "@/server/testimonials/submit";
 import type { FieldErrors } from "@/server/testimonials/validate";
 
 const FAILED = "Your testimonial could not be sent. Check your connection and try again.";
+const LABELS: Record<keyof FieldErrors, string> = {
+  name: "Your name",
+  email: "Email",
+  roleCompany: "Role and company",
+  rating: "Rating",
+  text: "Your testimonial",
+  avatar: "Photo",
+  consent: "Agreement",
+};
+
+/** "Please fix 2 fields: Your name, Email." so a screen reader hears what is wrong, not just that something is. */
+function summary(errors: FieldErrors): string {
+  const names = Object.keys(errors).map((key) => LABELS[key as keyof FieldErrors]);
+  return `Please fix ${names.length === 1 ? "1 field" : `${names.length} fields`}: ${names.join(", ")}.`;
+}
 
 export function SubmitForm({ publicId }: { publicId: string }) {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [message, setMessage] = useState<string>();
   const [pending, setPending] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const form = useRef<HTMLFormElement>(null);
+
+  // After a refused submit, move focus to the first field that needs fixing (WCAG 2.4.3, 3.3.1).
+  useEffect(() => {
+    if (attempt) form.current?.querySelector<HTMLElement>('[aria-invalid="true"]:not(fieldset), [aria-invalid="true"] input')?.focus();
+  }, [attempt]);
 
   // The form also posts natively without JavaScript; with it, errors come back without losing what was typed.
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending) return;
     setPending(true);
     try {
       const res = await fetch(event.currentTarget.action, { method: "POST", body: new FormData(event.currentTarget) });
       if (res.redirected) return window.location.assign(res.url);
       const body = (await res.json().catch(() => ({}))) as SubmitError;
       setErrors(body.fieldErrors ?? {});
-      setMessage(body.error ?? (body.fieldErrors ? "Please fix the marked fields." : FAILED));
+      setMessage(body.error ?? (body.fieldErrors ? summary(body.fieldErrors) : FAILED));
+      setAttempt((n) => n + 1);
     } catch {
       setMessage(FAILED);
     }
@@ -41,7 +65,7 @@ export function SubmitForm({ publicId }: { publicId: string }) {
     );
 
   return (
-    <form action={`/api/submit/${publicId}`} method="post" encType="multipart/form-data" onSubmit={onSubmit}>
+    <form ref={form} action={`/api/submit/${publicId}`} method="post" encType="multipart/form-data" onSubmit={onSubmit}>
       {message && <p role="alert">{message}</p>}
       <p>
         <label htmlFor="name">Your name</label>
@@ -77,7 +101,17 @@ export function SubmitForm({ publicId }: { publicId: string }) {
       <p>
         <label htmlFor="text">Your testimonial</label>
         <br />
-        <textarea id="text" name="text" rows={6} cols={50} required {...aria("text", true)} />
+        <textarea
+          id="text"
+          name="text"
+          rows={6}
+          cols={50}
+          minLength={10}
+          maxLength={2000}
+          required
+          style={{ maxWidth: "100%" }}
+          {...aria("text", true)}
+        />
         <small id="text-hint">
           <br />
           10 to 2000 characters, plain text.
@@ -106,7 +140,8 @@ export function SubmitForm({ publicId }: { publicId: string }) {
         </label>
         {error("consent")}
       </p>
-      <button type="submit" disabled={pending}>
+      {/* aria-disabled, not disabled: disabling the focused button would drop keyboard focus to the page. */}
+      <button type="submit" aria-disabled={pending || undefined}>
         {pending ? "Sending…" : "Send testimonial"}
       </button>
     </form>
