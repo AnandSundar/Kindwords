@@ -1,7 +1,7 @@
 import { mkdir, open, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Readable } from "node:stream";
-import { assertValidKey, type Storage } from "./index";
+import { assertValidKey, type Storage } from "./key";
 
 export function localStorage(uploadsDir: string): Storage {
   // assertValidKey refuses separators and `..`, so every path stays inside uploadsDir.
