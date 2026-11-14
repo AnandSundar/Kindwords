@@ -147,7 +147,8 @@ describe.each(targets)("repositories on $name", (target) => {
   describe("testimonials", () => {
     it("round-trips every field with defaults and 64-bit timestamps", async () => {
       const space = await createSpace(db, "S");
-      const created = await createTestimonial(db, { spaceId: space.id, name: "Ann", text: "Line one\nline two" });
+      const submitted = "Line one\nline two";
+      const created = await createTestimonial(db, { spaceId: space.id, name: "Ann", text: submitted, originalText: submitted });
       expect(created).toMatchObject({ status: "pending", featured: false, roleCompany: null, email: null, rating: null });
       expect(created.createdAt).toBeGreaterThan(2 ** 31);
 
@@ -156,7 +157,6 @@ describe.each(targets)("repositories on $name", (target) => {
         featured: true,
         rating: 5,
         text: "Fixed typo",
-        originalText: created.text,
       });
       expect(updated).toMatchObject({ status: "approved", featured: true, rating: 5, text: "Fixed typo", originalText: "Line one\nline two" });
       expect(await getTestimonial(db, created.id)).toEqual(updated);

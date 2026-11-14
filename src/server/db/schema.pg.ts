@@ -51,6 +51,7 @@ export const testimonials = pgTable(
     email: text("email"),
     rating: integer("rating"),
     text: text("text").notNull(),
+    /** The submitted text, set once at submission (null for manual adds); admin-only, never public. */
     originalText: text("original_text"),
     avatarKey: text("avatar_key"),
     createdAt: ms("created_at").notNull(),

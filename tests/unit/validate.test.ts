@@ -56,4 +56,12 @@ describe("validateSubmission (KTD7)", () => {
   it("reports every bad field at once", () => {
     expect(errorsFor({ name: "", rating: "9", consent: false }).sort()).toEqual(["consent", "name", "rating"]);
   });
+
+  it("admin mode makes email and rating optional and skips consent (U7)", () => {
+    expect(validateSubmission({ ...valid, email: " ", rating: "", consent: false }, "admin")).toEqual({
+      values: { name: "Ann Lee", email: null, roleCompany: "CTO, Acme", rating: null, text: valid.text },
+    });
+    const bad = validateSubmission({ ...valid, email: "nope", rating: "6", text: "short" }, "admin");
+    expect("fieldErrors" in bad && Object.keys(bad.fieldErrors).sort()).toEqual(["email", "rating", "text"]);
+  });
 });

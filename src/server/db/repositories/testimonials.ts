@@ -21,10 +21,10 @@ export type Testimonial = {
 };
 
 export type NewTestimonial = Pick<Testimonial, "spaceId" | "name" | "text"> &
-  Partial<Pick<Testimonial, "status" | "featured" | "roleCompany" | "email" | "rating" | "avatarKey">>;
+  Partial<Pick<Testimonial, "status" | "featured" | "roleCompany" | "email" | "rating" | "originalText" | "avatarKey">>;
 
 export type TestimonialPatch = Partial<
-  Pick<Testimonial, "status" | "featured" | "name" | "roleCompany" | "email" | "rating" | "text" | "originalText" | "avatarKey">
+  Pick<Testimonial, "status" | "featured" | "name" | "roleCompany" | "email" | "rating" | "text" | "avatarKey">
 >;
 
 export async function createTestimonial(db: Db, input: NewTestimonial): Promise<Testimonial> {
@@ -58,6 +58,17 @@ export async function updateTestimonial(db: Db, id: string, patch: TestimonialPa
     .where(eq(db.t.testimonials.id, id))
     .returning();
   return row;
+}
+
+/** R12: sets featured only while approved, in one statement so a concurrent status change cannot slip in. */
+export async function setTestimonialFeatured(db: Db, id: string, featured: boolean): Promise<boolean> {
+  const t = db.t.testimonials;
+  const rows = await db.q
+    .update(t)
+    .set({ featured, updatedAt: Date.now() })
+    .where(featured ? and(eq(t.id, id), eq(t.status, "approved")) : eq(t.id, id))
+    .returning({ id: t.id });
+  return rows.length > 0;
 }
 
 /** Avatar storage keys of every testimonial in the space. */

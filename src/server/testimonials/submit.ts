@@ -99,7 +99,13 @@ export async function submitTestimonial(request: Request, publicId: string, deps
   const avatarKey = avatar ? newMediaKey() : null;
   if (avatarKey) await deps.storage.put(avatarKey, avatar!);
   try {
-    await createTestimonial(deps.db, { spaceId: space.id, status: "pending", ...result.values, avatarKey });
+    await createTestimonial(deps.db, {
+      spaceId: space.id,
+      status: "pending",
+      ...result.values,
+      originalText: result.values.text, // R11: written once here, never changed by edits
+      avatarKey,
+    });
   } catch (error) {
     if (avatarKey) await deps.storage.delete(avatarKey).catch(() => {});
     throw error;

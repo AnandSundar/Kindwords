@@ -5,6 +5,7 @@ import { requireAdmin } from "@/server/auth/guard";
 import { getConfig } from "@/server/config";
 import { getDb } from "@/server/db/client";
 import { getSpace } from "@/server/db/repositories/spaces";
+import { listTestimonials } from "@/server/db/repositories/testimonials";
 import { spaceSnippets } from "@/server/spaces";
 import { DeleteSpaceForm, RenameSpaceForm } from "../forms";
 
@@ -18,6 +19,7 @@ export default async function SpacePage({
   await requireAdmin();
   const space = await getSpace(getDb(), (await params).id);
   if (!space) notFound();
+  const pending = (await listTestimonials(getDb(), space.id, "pending")).length;
   const renamed = (await searchParams).renamed !== undefined;
 
   // KTD13: PUBLIC_URL, else the origin this request came in on.
@@ -32,6 +34,11 @@ export default async function SpacePage({
       </p>
       <h1>{space.name}</h1>
       {renamed && <p role="status">The space was renamed.</p>}
+
+      <p>
+        <Link href={`/admin/spaces/${space.id}/inbox`}>Inbox ({pending} pending)</Link> ·{" "}
+        <Link href={`/admin/spaces/${space.id}/testimonials/new`}>Add a testimonial by hand</Link>
+      </p>
 
       <section aria-labelledby="share-heading">
         <h2 id="share-heading">Share and embed</h2>

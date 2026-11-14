@@ -13,7 +13,7 @@ import { openDb, type OpenDb } from "@/server/db/client";
 import { runMigrations } from "@/server/db/migrate";
 import { createAdmin, getAdmin } from "@/server/db/repositories/admin";
 import { createSpace, deleteSpace } from "@/server/db/repositories/spaces";
-import { listTestimonials } from "@/server/db/repositories/testimonials";
+import { createTestimonial, listTestimonials } from "@/server/db/repositories/testimonials";
 import { getSession, touchSession } from "@/server/db/repositories/sessions";
 import { removeTempDirs, targets } from "./db-helpers";
 
@@ -302,6 +302,22 @@ describe("built app via server/start.mjs", () => {
     expect(setCookie).toMatch(/HttpOnly/i);
     expect(setCookie).toMatch(/SameSite=lax/i);
     expect(setCookie).not.toMatch(/Secure/i);
+    cookie = setCookie.split(";")[0];
+  });
+
+  it("shows script-like testimonial text as literal text in the inbox and edit view (AE2, U7)", async () => {
+    const space = await createSpace(app.db, "Escapes");
+    const payload = "<script>alert(1)</script><img src=x onerror=alert(2)>";
+    const t = await createTestimonial(app.db, { spaceId: space.id, name: payload, text: payload, originalText: `${payload} original` });
+    for (const page of [`/admin/spaces/${space.id}/inbox`, `/admin/spaces/${space.id}/testimonials/${t.id}/edit`]) {
+      const res = await get(app, page, cookie);
+      expect(res.status).toBe(200);
+      const html = await res.text();
+      expect(html).not.toContain("<script>alert(1)");
+      expect(html).not.toContain("<img src=x");
+      expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
+    }
+    expect((await get(app, `/admin/spaces/${space.id}/inbox`)).headers.get("location")).toMatch(/\/login$/);
   });
 
   it("keeps counting failures per IP when the client forges X-Forwarded-For (TRUSTED_PROXY_COUNT=0)", async () => {

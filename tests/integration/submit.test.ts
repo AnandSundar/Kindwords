@@ -96,6 +96,7 @@ describe.each(targets)("public submission on $name", (target) => {
       roleCompany: "CTO, Acme",
       rating: 5,
       text: valid.text,
+      originalText: valid.text, // R11: kept from submission on
     });
     expect(files()).toEqual([row.avatarKey]);
   });
