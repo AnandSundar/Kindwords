@@ -49,6 +49,15 @@ docker compose logs kindwords   # find the line "Kindwords setup code: ..."
 
 The host port is 3000 by default; change it with `KINDWORDS_PORT` in `.env`. Before you share any links, set `PUBLIC_URL` in `.env` to the address people use (see [Configuration](#configuration)).
 
+To try it without cloning, run the published image (amd64 and arm64):
+
+```bash
+docker run -d --name kindwords -p 3000:3000 -v kindwords-data:/data ghcr.io/anandsundar/kindwords:latest
+docker logs kindwords   # find the line "Kindwords setup code: ..."
+```
+
+Add `-e PUBLIC_URL=https://reviews.example.com` once it runs at its real address.
+
 <table>
   <tr>
     <td width="50%"><img src="docs/media/collection-form.png" alt="The public collection form for Pebble Notes: name, email (never shown publicly), role and company, a rating from 1 to 5 stars, the testimonial text, an optional photo and the consent checkbox"></td>
