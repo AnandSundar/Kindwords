@@ -7,8 +7,8 @@ Thanks for helping. This guide covers setup, the checks a pull request must pass
 You need Node 24 and npm. For the container checks you also need Docker with Compose v2.
 
 ```bash
-git clone https://github.com/OWNER/kindwords.git
-cd kindwords
+git clone https://github.com/AnandSundar/Kindwords.git
+cd Kindwords
 npm ci
 mkdir -p data
 DATABASE_URL=file:./data/kindwords.db UPLOADS_DIR=./data/uploads npm run db:migrate

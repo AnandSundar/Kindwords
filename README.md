@@ -7,8 +7,6 @@
   <img src="docs/media/wall-light.png" alt="A product page with a Kindwords wall of five testimonial cards in a masonry layout: star ratings, quotes, names, roles and avatars, with the featured card marked by a green edge">
 </picture>
 
-> The clone URLs below use the placeholder `OWNER/kindwords`. Replace it with the real repository path.
-
 ## How it works
 
 **1. Collect.** Share a link. Customers write a few words, pick a rating, add a photo if they like, and agree to be shown publicly.
@@ -38,8 +36,8 @@
 You need Docker with Compose v2.
 
 ```bash
-git clone https://github.com/OWNER/kindwords.git
-cd kindwords
+git clone https://github.com/AnandSundar/Kindwords.git
+cd Kindwords
 cp .env.example .env
 docker compose up -d
 docker compose logs kindwords   # find the line "Kindwords setup code: ..."
