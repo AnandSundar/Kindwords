@@ -17,7 +17,7 @@ jobs:
     name: Lint, types, unit tests, widget size
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version: 24
@@ -32,7 +32,7 @@ jobs:
     name: Integration (SQLite, local disk)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version: 24
@@ -61,7 +61,7 @@ jobs:
       TEST_S3_ACCESS_KEY_ID: ci
       TEST_S3_SECRET_ACCESS_KEY: ci
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version: 24
@@ -79,7 +79,7 @@ jobs:
     name: End to end (Playwright)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version: 24
@@ -98,7 +98,7 @@ jobs:
     name: Docker image smoke test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version: 24
