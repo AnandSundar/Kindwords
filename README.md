@@ -1,45 +1,80 @@
 # Kindwords
 
-Kindwords is a free, self-hostable testimonial wall. Customers send testimonials through a public form for each product, you approve them in an inbox, and the approved ones appear on any website with one script tag. It runs with one `docker compose up`.
+**A free, self-hostable testimonial wall.** Collect testimonials with a public form, approve them in an inbox, and show them on any website with one script tag. It runs with one `docker compose up`.
 
-The clone URLs below use the placeholder `OWNER/kindwords`. Replace it with the real repository path.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/wall-dark.png">
+  <img src="docs/media/wall-light.png" alt="A product page with a Kindwords wall of five testimonial cards in a masonry layout: star ratings, quotes, names, roles and avatars, with the featured card marked by a green edge">
+</picture>
+
+> The clone URLs below use the placeholder `OWNER/kindwords`. Replace it with the real repository path.
+
+## How it works
+
+**1. Collect.** Share a link. Customers write a few words, pick a rating, add a photo if they like, and agree to be shown publicly.
+
+![A customer fills in the Kindwords collection form with name, email, role, a five-star rating and a short testimonial, ticks consent and sends it](docs/media/demo-collect.gif)
+
+**2. Approve.** New testimonials wait in your inbox. Nothing is public until you approve it. Feature the best ones to pin them first.
+
+![The admin inbox: the new testimonial is approved, then featured, and moves to the top of the approved list](docs/media/demo-approve.gif)
+
+**3. Embed.** Approved testimonials appear on your site, inside its own Shadow DOM so your page's CSS can't break it.
+
+![The product page now shows the new featured testimonial first, and a long testimonial opens with Read more](docs/media/demo-embed.gif)
 
 ## Features
 
-- A public collection form for each space: name, email, role or company, optional photo, 1–5 star rating, text, and a consent checkbox that must be ticked. Email is never shown publicly. Spam protection is a hidden honeypot field and per-client rate limiting. There is no CAPTCHA.
-- A moderation inbox: approve, reject, edit (the original text is kept and only the admin sees it), feature, delete, or add a testimonial by hand.
-- An embed that renders inside a Shadow DOM, so the host page's CSS does not restyle it. Masonry layout, light, dark or auto theme, under 15 KB gzipped.
-- An iframe wall page for each space, which also works as a link to share.
-- A public JSON feed of approved testimonials.
-- SQLite or Postgres for data. Photos on local disk or in any S3-compatible storage.
+- **Collection form** for each space (one space per product): name, email, role or company, optional photo, 1–5 star rating, text and a required consent checkbox. Email is never shown publicly.
+- **Spam protection** with a hidden honeypot field and per-client rate limiting. No CAPTCHA.
+- **Moderation inbox**: approve, reject, edit (the original text is kept, visible only to the admin), feature, delete, or add a testimonial by hand.
+- **Embed** in a Shadow DOM: masonry layout, light, dark or auto theme, under 15 KB gzipped.
+- **Wall page** for each space, to link to or embed as an iframe.
+- **JSON feed** of approved testimonials.
+- **Your choice of storage**: SQLite or Postgres for data, local disk or any S3-compatible store for photos.
 
 ## Quick start
+
+You need Docker with Compose v2.
 
 ```bash
 git clone https://github.com/OWNER/kindwords.git
 cd kindwords
 cp .env.example .env
 docker compose up -d
+docker compose logs kindwords   # find the line "Kindwords setup code: ..."
 ```
 
-Then:
+1. Open http://localhost:3000/setup, enter the setup code and create the admin account. The code is printed only while no admin account exists.
+2. Create a space for your product.
+3. Share its collection link (`/c/...`) with customers, and paste its embed code into your site.
 
-1. Find the setup code: `docker compose logs kindwords`. Look for the line `Kindwords setup code: ...`. The code is printed only while no admin account exists.
-2. Open http://localhost:3000/setup, enter the setup code, and create the admin account.
-3. In the admin, create a space. Make one space per product.
-4. Share the space's collection link (`/c/...`) with customers.
+The host port is 3000 by default; change it with `KINDWORDS_PORT` in `.env`. Before you share any links, set `PUBLIC_URL` in `.env` to the address people use (see [Configuration](#configuration)).
 
-The host port is 3000 by default. Change it with `KINDWORDS_PORT` in `.env`. Before you share any links, set `PUBLIC_URL` in `.env` to the address people use (see [Configuration](#configuration)).
+<table>
+  <tr>
+    <td width="50%"><img src="docs/media/collection-form.png" alt="The public collection form for Pebble Notes: name, email (never shown publicly), role and company, a rating from 1 to 5 stars, the testimonial text, an optional photo and the consent checkbox"></td>
+    <td width="50%"><img src="docs/media/moderation-inbox.png" alt="The moderation inbox with two pending testimonials, each with Approve, Reject, Edit and Delete buttons"></td>
+  </tr>
+  <tr>
+    <td align="center">The collection form customers see</td>
+    <td align="center">The moderation inbox</td>
+  </tr>
+</table>
 
 ## Embedding a wall
 
-The admin page for each space shows the embed code, with your public address filled in. The script tag is:
+Each space's admin page shows its collection link, wall page and embed code, with your public address filled in.
+
+<img src="docs/media/embed-code.png" width="560" alt="The admin page for a space, showing the collection link, the wall page link, the script tag and the iframe code to copy">
+
+The script tag:
 
 ```html
 <script src="https://reviews.example.com/embed.js" data-space="SPACE_ID" async></script>
 ```
 
-The wall appears where the tag is. Attributes:
+The wall appears where the tag is.
 
 | Attribute | Required | Meaning |
 |-----------|----------|---------|
@@ -47,7 +82,7 @@ The wall appears where the tag is. Attributes:
 | `data-theme` | no | `light`, `dark` or `auto` (the default). `auto` follows the visitor's system setting |
 | `data-featured` | no | Add it with no value to show only featured testimonials. `data-featured="false"` turns this off |
 
-To change the font, set the `--kindwords-font` CSS custom property on your page. The widget does not load fonts itself, so load a web font on your page and name it here:
+To change the font, set `--kindwords-font` on your page. The widget loads no fonts itself, so load a web font on your page and name it here:
 
 ```css
 :root {
@@ -55,17 +90,15 @@ To change the font, set the `--kindwords-font` CSS custom property on your page.
 }
 ```
 
-**Iframe fallback.** Each space also has a wall page, `https://reviews.example.com/w/SPACE_ID`, which you can link to or embed:
+**Iframe.** Each space also has a wall page, `https://reviews.example.com/w/SPACE_ID`, to link to or embed:
 
 ```html
 <iframe src="https://reviews.example.com/w/SPACE_ID?theme=dark&featured=1" title="Testimonials" loading="lazy" style="width:100%;height:600px;border:0"></iframe>
 ```
 
-- `theme` accepts `light` or `dark`. Any other value means `auto`.
-- `featured=1` shows only featured testimonials.
-- The iframe height is fixed, so the wall scrolls inside it.
+`theme` accepts `light` or `dark`; anything else means `auto`. `featured=1` shows only featured testimonials. The iframe height is fixed, so the wall scrolls inside it.
 
-**JSON feed.** `https://reviews.example.com/api/public/SPACE_ID/testimonials` returns approved testimonials as JSON. Add `?featured=1` to limit it to featured ones. The response is readable from any site without credentials.
+**JSON feed.** `https://reviews.example.com/api/public/SPACE_ID/testimonials` returns approved testimonials, readable from any site without credentials. Add `?featured=1` for featured ones only.
 
 ```json
 {
@@ -84,20 +117,20 @@ To change the font, set the `--kindwords-font` CSS custom property on your page.
 }
 ```
 
-`rating`, `roleCompany` and `avatarUrl` can be `null`. `avatarUrl` is absolute when `PUBLIC_URL` is set. Otherwise it is a path to resolve against the feed's address. Featured testimonials come first, then newest first.
+`rating`, `roleCompany` and `avatarUrl` can be `null`. `avatarUrl` is absolute when `PUBLIC_URL` is set; otherwise it is a path to resolve against the feed's address. Featured testimonials come first, then newest first.
 
-Only approved testimonials are ever public. Email addresses are never included in any public surface, and neither is the original text of an edited testimonial.
+Only approved testimonials are ever public. No public surface includes email addresses or the original text of an edited testimonial.
 
 ## Configuration
 
-Copy `.env.example` to `.env` and edit it. Every setting is optional. The defaults run a single-machine install.
+Copy `.env.example` to `.env` and edit it. Every setting is optional; the defaults run a single-machine install.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PUBLIC_URL` | unset (uses the request address) | The address people use to reach Kindwords, with no trailing slash. Set it in production |
 | `KINDWORDS_PORT` | `3000` | Host port for `docker compose up`. The container always listens on 3000 |
 | `TRUSTED_PROXY_COUNT` | `0` | Number of reverse proxies in front of Kindwords (see [Behind a reverse proxy](#behind-a-reverse-proxy)) |
-| `DATABASE_URL` | `file:/data/kindwords.db` | `file:` path for SQLite, or `postgres://` or `postgresql://` URL for Postgres |
+| `DATABASE_URL` | `file:/data/kindwords.db` | `file:` path for SQLite, or a `postgres://` or `postgresql://` URL |
 | `STORAGE_DRIVER` | `local` | `local` for disk, or `s3` for an S3-compatible store |
 | `UPLOADS_DIR` | `/data/uploads` | Photo folder when `STORAGE_DRIVER=local` |
 | `S3_BUCKET` | none | Bucket name. Required when `STORAGE_DRIVER=s3` |
@@ -106,21 +139,17 @@ Copy `.env.example` to `.env` and edit it. Every setting is optional. The defaul
 | `S3_ACCESS_KEY_ID` | unset | Access key. Set it together with `S3_SECRET_ACCESS_KEY`, or leave both unset |
 | `S3_SECRET_ACCESS_KEY` | unset | Secret key. Set it together with `S3_ACCESS_KEY_ID`, or leave both unset |
 
-### Why `PUBLIC_URL` matters
+Set `PUBLIC_URL` to the address people use, with `https://` in production. Kindwords uses it for:
 
-Set it to the address people use, and use `https://` in production. Kindwords uses it for:
-
-- **Share links and embed code.** The collection link, wall link and script tag are built from it.
+- **Share links and embed code**: the collection link, wall link and script tag.
 - **Absolute photo URLs** in the JSON feed.
-- **The Secure cookie.** The login cookie is marked `Secure` only when `PUBLIC_URL` starts with `https://`. Plain-HTTP installs on a local network can still log in.
+- **The Secure cookie**: the login cookie is marked `Secure` only when `PUBLIC_URL` starts with `https://`, so plain-HTTP installs on a local network can still log in.
 
 ## Behind a reverse proxy
 
-Set `TRUSTED_PROXY_COUNT` to the number of proxies between the internet and Kindwords. One nginx or Caddy means `1`. Leave it at `0` only when clients connect directly.
+Set `TRUSTED_PROXY_COUNT` to the number of proxies between the internet and Kindwords: one nginx or Caddy means `1`. Leave it at `0` only when clients connect directly. Too high, and clients can fake their IP address. `0` behind a proxy, and every visitor shares the proxy's rate-limit bucket.
 
-A wrong value has two bad effects. If it is too high, clients can fake their IP address. If it is `0` behind a proxy, every visitor appears as the proxy and they share one rate-limit bucket.
-
-The proxy must also forward the original `Host` header. Without `PUBLIC_URL`, Kindwords builds links from `Host` and refuses form posts whose `Origin` does not match it. Caddy forwards it by default. nginx needs the header set explicitly.
+The proxy must also forward the original `Host` header. Without `PUBLIC_URL`, Kindwords builds links from `Host` and refuses form posts whose `Origin` does not match it. Caddy forwards it by default; nginx needs it set explicitly.
 
 Caddy (with `PUBLIC_URL=https://reviews.example.com` and `TRUSTED_PROXY_COUNT=1`):
 
@@ -146,21 +175,17 @@ server {
 }
 ```
 
-## Choose your database and storage at install
+## Database and storage
 
-The defaults are a SQLite file and local photos, both in the `kindwords-data` volume. Postgres and S3 are optional settings in `.env`.
+The defaults are a SQLite file and local photos, both in the `kindwords-data` volume. Postgres and S3 are optional settings in `.env`. Kindwords has no tool to move data between SQLite and Postgres, or between local disk and S3, so choose before you collect any data.
 
-Kindwords has no tool to move data between SQLite and Postgres, or between local disk and S3. Choose before you collect any data.
-
-Postgres:
+Postgres (`docker-compose.yml` does not start a database; point `DATABASE_URL` at a Postgres server you run):
 
 ```
 DATABASE_URL=postgres://kindwords:PASSWORD@db.example.com:5432/kindwords
 ```
 
-`docker-compose.yml` does not start a database. Point `DATABASE_URL` at a Postgres server you run.
-
-S3-compatible storage:
+S3-compatible storage (the bucket does not need to be public; Kindwords serves photos itself at `/media/...`):
 
 ```
 STORAGE_DRIVER=s3
@@ -171,13 +196,9 @@ S3_ACCESS_KEY_ID=YOUR_KEY_ID
 S3_SECRET_ACCESS_KEY=YOUR_SECRET
 ```
 
-The bucket does not need to be public. Kindwords streams photos itself, at `/media/...`.
-
 ## Backups
 
-The `kindwords-data` volume holds the SQLite file (`kindwords.db`) and local photos. Docker Compose names the volume `<folder>_kindwords-data`, where the folder name is the project name by default. Back up that volume. Stop the container first so the SQLite file is not written during the copy.
-
-If you use Postgres or S3, back up that database or bucket instead.
+The `kindwords-data` volume holds the SQLite file (`kindwords.db`) and local photos. Docker Compose names it `<folder>_kindwords-data`, where the folder name is the project name by default. Stop the container, then back up that volume, so the SQLite file is not written during the copy. If you use Postgres or S3, back up that database or bucket instead.
 
 ## Reset the admin password
 
@@ -185,7 +206,7 @@ If you use Postgres or S3, back up that database or bucket instead.
 docker compose exec -it kindwords reset-password
 ```
 
-Type the new password at the prompt. The command signs out every session, including yours.
+Type the new password at the prompt. This signs out every session, including yours.
 
 ## Development
 
@@ -198,11 +219,7 @@ DATABASE_URL=file:./data/kindwords.db UPLOADS_DIR=./data/uploads npm run db:migr
 npm run dev
 ```
 
-The commands above use POSIX shell syntax. In PowerShell, set `$env:DATABASE_URL` and `$env:UPLOADS_DIR` first.
-
-`npm run dev` builds the embed script and starts the Next.js dev server at http://localhost:3000. It reads `.env`, so put the same two values there too. The setup code prints in the terminal, and the setup steps are the same as in the quick start.
-
-Checks:
+These commands use POSIX shell syntax; in PowerShell, set `$env:DATABASE_URL` and `$env:UPLOADS_DIR` first. `npm run dev` builds the embed script and starts the Next.js dev server at http://localhost:3000. It reads `.env`, so put the same two values there too. The setup code prints in the terminal.
 
 | Command | What it runs | Needs |
 |---------|--------------|-------|
@@ -240,3 +257,5 @@ MIT. See [LICENSE](LICENSE).
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+<sub>The screenshots and recordings show the real app with fictional sample data. The recordings are also in `docs/media/` as WebM.</sub>
