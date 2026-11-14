@@ -73,6 +73,7 @@ describe("embed widget (U9)", () => {
     expect(cards).toHaveLength(2);
     expect(cards[0].querySelector(".kw-text")!.textContent).toBe("Kindwords made this so easy.");
     expect(cards[0].querySelector(".kw-stars")!.getAttribute("aria-label")).toBe("5 out of 5 stars");
+    expect(cards[1].getAttribute("aria-label")).toBe("Testimonial from Bo");
   });
 
   it("renders markup in testimonial fields as text and creates no element from it (AE2)", async () => {

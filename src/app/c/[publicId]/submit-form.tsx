@@ -94,7 +94,9 @@ export function SubmitForm({ publicId }: { publicId: string }) {
         <legend id="rating-legend">Rating</legend>
         {[1, 2, 3, 4, 5].map((n) => (
           <label key={n} style={choiceLabel}>
-            <input type="radio" name="rating" value={n} required style={choiceInput} /> {n} {n === 1 ? "star" : "stars"}
+            <input type="radio" name="rating" value={n} required style={choiceInput} />
+            {/* One text node: in a flex label, a separate " " node is dropped from the spoken name ("1star"). */}
+            {`${n} ${n === 1 ? "star" : "stars"}`}
           </label>
         ))}
         {error("rating")}
@@ -145,6 +147,10 @@ export function SubmitForm({ publicId }: { publicId: string }) {
       <button type="submit" aria-disabled={pending || undefined}>
         {pending ? "Sending…" : "Send testimonial"}
       </button>
+      {/* Screen readers announce aria-disabled only as "unavailable"; this says why. */}
+      <p role="status" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)", whiteSpace: "nowrap" }}>
+        {pending ? "Sending your testimonial…" : ""}
+      </p>
     </form>
   );
 }

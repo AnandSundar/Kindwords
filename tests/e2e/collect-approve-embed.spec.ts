@@ -61,6 +61,7 @@ test("submit, approve and feature a testimonial, then it shows in the embed (F2,
   await customer.getByLabel("Role and company (optional)").fill("Founder, Pebble");
   // What a screen reader announces: a named radio group, and choice rows at least 44px tall to click.
   await expect(customer.getByRole("radiogroup", { name: "Rating" }).getByRole("radio")).toHaveCount(5);
+  await expect(customer.getByRole("radio", { name: "1 star", exact: true })).toBeAttached(); // not "1star"
   for (const label of [customer.locator("label").filter({ has: customer.getByLabel("4 stars") }), customer.locator("label").filter({ hasText: "I agree that my name" })]) {
     expect((await label.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   }
@@ -89,6 +90,7 @@ test("submit, approve and feature a testimonial, then it shows in the embed (F2,
   await host.goto(`http://localhost:3301/?space=${publicId}`);
   const card = host.locator("kindwords-wall .kw-card"); // Playwright CSS pierces open shadow roots
   await expect(card).toHaveCount(1);
+  await expect(card).toHaveAttribute("aria-label", "Testimonial from Rosa Díaz");
   await expect(card.locator(".kw-name")).toHaveText("Rosa Díaz");
   await expect(card.locator(".kw-role")).toHaveText("Founder, Pebble");
   await expect(card.locator(".kw-text")).toHaveText(TEXT);

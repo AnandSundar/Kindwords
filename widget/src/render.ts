@@ -36,6 +36,8 @@ function safeUrl(value: unknown, base?: string): string | undefined {
 export function card(doc: Document, item: PublicItem, base?: string): HTMLElement {
   const name = String(item.name ?? "");
   const figure = el(doc, "figure", "kw-card");
+  // Named card: screen readers otherwise say only "figure", and "Read more" loses whose quote it opens.
+  figure.setAttribute("aria-label", `Testimonial from ${name}`);
   figure.style.setProperty("--h", String(hueFor(name)));
   if (item.featured === true) figure.dataset.featured = "";
 
