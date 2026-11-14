@@ -61,14 +61,14 @@ export async function updateTestimonial(db: Db, id: string, patch: TestimonialPa
 }
 
 /** R12: sets featured only while approved, in one statement so a concurrent status change cannot slip in. */
-export async function setTestimonialFeatured(db: Db, id: string, featured: boolean): Promise<boolean> {
+export async function setTestimonialFeatured(db: Db, id: string, featured: boolean): Promise<Testimonial | undefined> {
   const t = db.t.testimonials;
-  const rows = await db.q
+  const [row] = await db.q
     .update(t)
     .set({ featured, updatedAt: Date.now() })
     .where(featured ? and(eq(t.id, id), eq(t.status, "approved")) : eq(t.id, id))
-    .returning({ id: t.id });
-  return rows.length > 0;
+    .returning();
+  return row;
 }
 
 /** Avatar storage keys of every testimonial in the space. */

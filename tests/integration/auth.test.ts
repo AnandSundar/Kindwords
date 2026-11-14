@@ -320,6 +320,25 @@ describe("built app via server/start.mjs", () => {
     expect((await get(app, `/admin/spaces/${space.id}/inbox`)).headers.get("location")).toMatch(/\/login$/);
   });
 
+  it("shows the Original only when it differs, 404s another space's testimonial, and guards edit and add (AE4, U7)", async () => {
+    const space = await createSpace(app.db, "Originals");
+    const other = await createSpace(app.db, "Other");
+    const edited = await createTestimonial(app.db, { spaceId: space.id, name: "Ann", text: "Edited.", originalText: "Submitted." });
+    const same = await createTestimonial(app.db, { spaceId: space.id, name: "Bo", text: "Unchanged.", originalText: "Unchanged." });
+    const manual = await createTestimonial(app.db, { spaceId: space.id, name: "Cy", text: "Added by hand." });
+    const edit = (t: { id: string }, spaceId = space.id) => `/admin/spaces/${spaceId}/testimonials/${t.id}/edit`;
+    expect(await (await get(app, edit(edited), cookie)).text()).toContain('id="original-heading"');
+    for (const t of [same, manual]) {
+      const res = await get(app, edit(t), cookie);
+      expect(res.status).toBe(200);
+      expect(await res.text()).not.toContain('id="original-heading"');
+    }
+    expect((await get(app, edit(edited, other.id), cookie)).status).toBe(404);
+    for (const page of [edit(edited), `/admin/spaces/${space.id}/testimonials/new`]) {
+      expect((await get(app, page)).headers.get("location")).toMatch(/\/login$/);
+    }
+  });
+
   it("keeps counting failures per IP when the client forges X-Forwarded-For (TRUSTED_PROXY_COUNT=0)", async () => {
     for (let i = 0; i < 5; i++) {
       const res = await submit(app, "/login", { password: "wrong" }, { xff: `198.51.100.${i}` });

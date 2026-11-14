@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import sharp from "sharp";
@@ -19,6 +19,20 @@ const appDbDir = mkdtempSync(path.join(os.tmpdir(), "kindwords-moderation-db-"))
 process.env.DATABASE_URL = `file:${path.join(appDbDir, "app.db").replaceAll("\\", "/")}`;
 process.env.STORAGE_DRIVER = "local";
 process.env.UPLOADS_DIR = uploadsDir;
+
+const failUpdate = vi.hoisted(() => ({ mode: undefined as "throw" | "gone" | undefined }));
+vi.mock("@/server/db/repositories/testimonials", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/server/db/repositories/testimonials")>();
+  return {
+    ...real,
+    updateTestimonial: (...args: Parameters<typeof real.updateTestimonial>) =>
+      failUpdate.mode === "throw"
+        ? Promise.reject(new Error("update failed"))
+        : failUpdate.mode === "gone"
+          ? Promise.resolve(undefined)
+          : real.updateTestimonial(...args),
+  };
+});
 
 const cookieJar = vi.hoisted(() => ({ token: undefined as string | undefined }));
 vi.mock("next/headers", () => ({
@@ -44,6 +58,7 @@ const bigPng = () => {
   return sharp(noise, { raw: { width: 710, height: 710, channels: 3 } }).png().toBuffer();
 };
 const stored = (key: string | null) => key !== null && existsSync(path.join(uploadsDir, key));
+const files = () => readdirSync(uploadsDir, { recursive: true }).sort();
 
 describe.each(targets)("moderation on $name", (target) => {
   let db: OpenDb;
@@ -54,6 +69,7 @@ describe.each(targets)("moderation on $name", (target) => {
     spaceId = (await createSpace(db, "Acme")).id;
   });
   afterEach(async () => {
+    failUpdate.mode = undefined;
     await db.close();
   });
 
@@ -63,7 +79,7 @@ describe.each(targets)("moderation on $name", (target) => {
   it("clears featured when a featured testimonial leaves approved; re-approving keeps it unfeatured (AE8)", async () => {
     const t = await submitted();
     await changeStatus(db, t.id, "approved");
-    expect(await setFeatured(db, t.id, true)).toEqual({ saved: true });
+    expect(await setFeatured(db, t.id, true)).toMatchObject({ featured: true });
     expect(await changeStatus(db, t.id, "pending")).toMatchObject({ status: "pending", featured: false });
     expect(await changeStatus(db, t.id, "approved")).toMatchObject({ status: "approved", featured: false });
   });
@@ -78,9 +94,9 @@ describe.each(targets)("moderation on $name", (target) => {
 
   it("refuses to feature a pending or rejected testimonial", async () => {
     const t = await submitted();
-    expect(await setFeatured(db, t.id, true)).toHaveProperty("error");
+    expect(await setFeatured(db, t.id, true)).toBeUndefined();
     await changeStatus(db, t.id, "rejected");
-    expect(await setFeatured(db, t.id, true)).toHaveProperty("error");
+    expect(await setFeatured(db, t.id, true)).toBeUndefined();
     expect((await getTestimonial(db, t.id))!.featured).toBe(false);
   });
 
@@ -143,6 +159,27 @@ describe.each(targets)("moderation on $name", (target) => {
     });
     expect((await getTestimonial(db, t.id))!.avatarKey).toBe(key);
     expect(stored(key)).toBe(true);
+  });
+
+  it("keeps the current avatar when an edit leaves the photo alone", async () => {
+    const t = await submitted();
+    const first = await saveTestimonial(db, storage, { id: t.id }, fields, { file: await png(40) });
+    const key = "testimonial" in first ? first.testimonial.avatarKey : null;
+    expect(await saveTestimonial(db, storage, { id: t.id }, { ...fields, name: "Ann B" })).toMatchObject({ testimonial: { avatarKey: key } });
+    expect(stored(key)).toBe(true);
+  });
+
+  it.each([
+    ["the update fails", "throw"],
+    ["the row is deleted mid-save", "gone"],
+  ] as const)("deletes the newly stored avatar when %s", async (_label, mode) => {
+    const t = await submitted();
+    const before = files();
+    failUpdate.mode = mode;
+    const save = saveTestimonial(db, storage, { id: t.id }, fields, { file: await png(40) });
+    if (mode === "throw") await expect(save).rejects.toThrow("update failed");
+    else expect(await save).toEqual({ error: expect.any(String) });
+    expect(files()).toEqual(before);
   });
 
   it("deletes a testimonial and its avatar file", async () => {
@@ -211,7 +248,11 @@ describe("moderation server actions", () => {
     );
     expect(await getTestimonial(db, t.id)).toMatchObject({ status: "approved", featured: true });
 
-    expect(await a.saveTestimonialAction({}, form({ id: t.id, name: "", text: "Edited words." }))).toHaveProperty("fieldErrors.name");
+    // Refused input is echoed back so the form keeps what the admin typed.
+    expect(await a.saveTestimonialAction({}, form({ id: t.id, name: "", text: "Edited words." }))).toMatchObject({
+      fieldErrors: { name: expect.any(String) },
+      values: { name: "", text: "Edited words." },
+    });
     const avatar = new File([new Uint8Array(await bigPng())], "me.png");
     await expect(a.saveTestimonialAction({}, form({ id: t.id, name: "Ann", text: "Edited words.", avatar }))).rejects.toMatchObject(
       redirectTo(`${inbox}?status=approved&saved`),

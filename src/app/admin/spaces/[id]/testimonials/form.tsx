@@ -13,6 +13,7 @@ export function TestimonialForm(props: Props) {
   const [state, action, pending] = useActionState(saveTestimonialAction, {});
   const t = props.mode === "edit" ? props.testimonial : undefined;
   const errors = state.fieldErrors ?? {};
+  const v = state.values;
 
   const row = (name: keyof typeof errors, label: string, control: (aria: object) => ReactNode, hint?: string) => {
     const describedBy = [hint && `${name}-hint`, errors[name] && `${name}-error`].filter(Boolean).join(" ");
@@ -41,17 +42,17 @@ export function TestimonialForm(props: Props) {
     <form action={action}>
       {t ? <input type="hidden" name="id" value={t.id} /> : <input type="hidden" name="spaceId" value={(props as { spaceId: string }).spaceId} />}
       {state.error && <p role="alert">{state.error}</p>}
-      {row("name", "Name", (aria) => <input {...aria} name="name" type="text" required maxLength={80} defaultValue={t?.name} />)}
+      {row("name", "Name", (aria) => <input {...aria} name="name" type="text" required maxLength={80} defaultValue={v?.name ?? t?.name} />)}
       {row("roleCompany", "Role and company (optional)", (aria) => (
-        <input {...aria} name="role" type="text" maxLength={120} defaultValue={t?.roleCompany ?? ""} />
+        <input {...aria} name="role" type="text" maxLength={120} defaultValue={v?.roleCompany ?? t?.roleCompany ?? ""} />
       ))}
       {row(
         "email",
         "Email (optional, never shown publicly)",
-        (aria) => <input {...aria} name="email" type="email" maxLength={254} defaultValue={t?.email ?? ""} />,
+        (aria) => <input {...aria} name="email" type="email" maxLength={254} defaultValue={v?.email ?? t?.email ?? ""} />,
       )}
       {row("rating", "Rating", (aria) => (
-        <select {...aria} name="rating" defaultValue={t?.rating ? String(t.rating) : ""}>
+        <select {...aria} name="rating" defaultValue={v?.rating ?? (t?.rating ? String(t.rating) : "")}>
           <option value="">No rating</option>
           {[5, 4, 3, 2, 1].map((n) => (
             <option key={n} value={n}>
@@ -61,7 +62,7 @@ export function TestimonialForm(props: Props) {
         </select>
       ))}
       {row("text", "Testimonial", (aria) => (
-        <textarea {...aria} name="text" required rows={6} cols={60} maxLength={2000} defaultValue={t?.text} />
+        <textarea {...aria} name="text" required rows={6} cols={60} maxLength={2000} defaultValue={v?.text ?? t?.text} />
       ))}
       {row(
         "avatar",
@@ -74,14 +75,14 @@ export function TestimonialForm(props: Props) {
           {/* eslint-disable-next-line @next/next/no-img-element -- fixed 256px webp from /media */}
           <img src={`/media/${t.avatarKey}`} alt="Current photo" width={64} height={64} />{" "}
           <label>
-            <input type="checkbox" name="removeAvatar" /> Remove photo
+            <input type="checkbox" name="removeAvatar" defaultChecked={v?.removeAvatar} /> Remove photo
           </label>
         </p>
       )}
       {!t && (
         <p>
           <label>
-            <input type="checkbox" name="publish" defaultChecked /> Publish now (otherwise it waits in the inbox as pending)
+            <input type="checkbox" name="publish" defaultChecked={v?.publish ?? true} /> Publish now (otherwise it waits in the inbox as pending)
           </label>
         </p>
       )}

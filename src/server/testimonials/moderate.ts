@@ -26,10 +26,9 @@ export async function changeStatus(db: Db, id: string, status: TestimonialStatus
   return updateTestimonial(db, id, statusPatch(status));
 }
 
-/** R12: featured can be set only while approved. */
-export async function setFeatured(db: Db, id: string, featured: boolean): Promise<{ saved: true } | { error: string }> {
-  if (await setTestimonialFeatured(db, id, featured)) return { saved: true };
-  return { error: "Only approved testimonials can be featured. Approve it first." };
+/** R12: featured can be set only while approved; undefined when refused or missing. */
+export async function setFeatured(db: Db, id: string, featured: boolean): Promise<Testimonial | undefined> {
+  return setTestimonialFeatured(db, id, featured);
 }
 
 const logDeleteFailure = (key: string) => (error: unknown) => console.error(`Could not delete avatar ${key}:`, error);
