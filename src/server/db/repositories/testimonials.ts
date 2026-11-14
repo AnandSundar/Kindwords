@@ -42,6 +42,32 @@ export async function getTestimonial(db: Db, id: string): Promise<Testimonial | 
 }
 
 /** Newest first, optionally filtered by status. */
+/** The columns a public surface may read (KTD9); email and original text are never selected. */
+export type PublicRow = Pick<Testimonial, "name" | "roleCompany" | "rating" | "text" | "avatarKey" | "featured" | "createdAt">;
+
+// shortcut: a wall shows at most this many; add paging to the feed if a space ever needs more.
+const PUBLIC_LIMIT = 1000;
+
+/** Approved only, featured first, then newest (R12, R18). */
+export async function listPublicTestimonials(db: Db, spaceId: string, featuredOnly: boolean): Promise<PublicRow[]> {
+  const t = db.t.testimonials;
+  const approved = and(eq(t.spaceId, spaceId), eq(t.status, "approved"));
+  return db.q
+    .select({
+      name: t.name,
+      roleCompany: t.roleCompany,
+      rating: t.rating,
+      text: t.text,
+      avatarKey: t.avatarKey,
+      featured: t.featured,
+      createdAt: t.createdAt,
+    })
+    .from(t)
+    .where(featuredOnly ? and(approved, eq(t.featured, true)) : approved)
+    .orderBy(desc(t.featured), desc(t.createdAt), desc(t.id))
+    .limit(PUBLIC_LIMIT);
+}
+
 export async function listTestimonials(db: Db, spaceId: string, status?: TestimonialStatus): Promise<Testimonial[]> {
   const t = db.t.testimonials;
   return db.q

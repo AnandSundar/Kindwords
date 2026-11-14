@@ -16,3 +16,5 @@ bash.exe.stackdump
 /test-data/
 /test-results/
 /playwright-report/
+/public/embed.js
+/.playwright-mcp/

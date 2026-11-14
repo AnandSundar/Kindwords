@@ -2,8 +2,8 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/server/auth/guard";
-import { getConfig } from "@/server/config";
 import { getDb } from "@/server/db/client";
+import { publicOrigin } from "@/server/origin";
 import { getSpace } from "@/server/db/repositories/spaces";
 import { listTestimonials } from "@/server/db/repositories/testimonials";
 import { spaceSnippets } from "@/server/spaces";
@@ -22,10 +22,7 @@ export default async function SpacePage({
   const pending = (await listTestimonials(getDb(), space.id, "pending")).length;
   const renamed = (await searchParams).renamed !== undefined;
 
-  // KTD13: PUBLIC_URL, else the origin this request came in on.
-  const h = await headers();
-  const origin = getConfig().publicUrl ?? `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
-  const s = spaceSnippets(origin, space.publicId);
+  const s = spaceSnippets(publicOrigin(await headers()), space.publicId);
 
   return (
     <>

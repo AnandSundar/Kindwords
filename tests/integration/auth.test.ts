@@ -16,6 +16,7 @@ import { createSpace, deleteSpace } from "@/server/db/repositories/spaces";
 import { createTestimonial, listTestimonials } from "@/server/db/repositories/testimonials";
 import { getSession, touchSession } from "@/server/db/repositories/sessions";
 import { removeTempDirs, targets } from "./db-helpers";
+import { changeStatus } from "@/server/testimonials/moderate";
 
 const DAY = 24 * 60 * 60 * 1000;
 const root = process.cwd();
@@ -337,6 +338,35 @@ describe("built app via server/start.mjs", () => {
     for (const page of [edit(edited), `/admin/spaces/${space.id}/testimonials/new`]) {
       expect((await get(app, page)).headers.get("location")).toMatch(/\/login$/);
     }
+  });
+
+  it("serves the wall page: escaped text, framable by any site, fresh on every load, empty for unknown spaces (U8)", async () => {
+    const space = await createSpace(app.db, "Wall");
+    const payload = "<script>alert(1)</script>";
+    const t = await createTestimonial(app.db, { spaceId: space.id, name: "Ann", text: payload, status: "approved", email: "ann@example.com" });
+
+    const wall = await get(app, `/w/${space.publicId}?theme=dark`);
+    expect(wall.status).toBe(200);
+    expect(wall.headers.get("content-security-policy")).toBe("frame-ancestors *");
+    expect(wall.headers.get("x-frame-options")).toBeNull();
+    const html = await wall.text();
+    expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
+    expect(html).not.toContain("<script>alert(1)");
+    expect(html).not.toContain("ann@example.com");
+    expect(html).toContain('data-theme="dark"');
+
+    const admin = await get(app, "/admin", cookie);
+    expect(admin.headers.get("x-frame-options")).toBe("DENY");
+    expect(admin.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
+
+    // AE8: moved back to pending, gone on the very next load.
+    await changeStatus(app.db, t.id, "pending");
+    expect(await (await get(app, `/w/${space.publicId}`)).text()).toContain("No testimonials yet.");
+    expect(await (await get(app, "/w/no-such-space")).text()).toContain("No testimonials yet.");
+
+    const feed = await get(app, `/api/public/${space.publicId}/testimonials`);
+    expect(feed.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(feed.headers.get("access-control-allow-origin")).toBe("*");
   });
 
   it("keeps counting failures per IP when the client forges X-Forwarded-For (TRUSTED_PROXY_COUNT=0)", async () => {
